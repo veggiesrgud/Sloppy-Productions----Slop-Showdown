@@ -1,10 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://dl2ed4gkybggf"]
+[gd_scene format=3 uid="uid://dl2ed4gkybggf"]
 
 [ext_resource type="Script" uid="uid://cu47grjp072jk" path="res://objects/player.gd" id="1_ffboj"]
-[ext_resource type="Resource" uid="uid://cu2gtxlcmbb34" path="res://weapons/blaster-repeater.tres" id="2_6epbw"]
+[ext_resource type="Resource" uid="uid://5pgp0fpeenrk" path="res://weapons/water_blaster.tres" id="2_6epbw"]
 [ext_resource type="Texture2D" uid="uid://8ggihh27mlrr" path="res://sprites/blob_shadow.png" id="2_b0fo8"]
 [ext_resource type="Script" uid="uid://dg01pkkc1c5vd" path="res://scripts/weapon.gd" id="2_i825w"]
-[ext_resource type="Resource" uid="uid://c56y8pqoyk15f" path="res://weapons/blaster.tres" id="3_kr4p8"]
 [ext_resource type="SpriteFrames" uid="uid://dbv3sy5qjatnl" path="res://sprites/burst_animation.tres" id="4_m6ukc"]
 [ext_resource type="AudioStream" uid="uid://cydjn1ct3hps2" path="res://sounds/walking.ogg" id="5_ics1s"]
 
@@ -12,24 +11,66 @@
 radius = 0.3
 height = 1.0
 
-[node name="Player" type="CharacterBody3D"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.3
+height = 1.0
+radial_segments = 12
+rings = 6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_slop"]
+albedo_color = Color(0.92, 0.45, 0.62, 1)
+roughness = 0.7
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.32
+height = 0.64
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eye"]
+albedo_color = Color(0, 0, 0, 1)
+
+[node name="Player" type="CharacterBody3D" unique_id=1836416615]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 script = ExtResource("1_ffboj")
-weapons = Array[ExtResource("2_i825w")]([ExtResource("3_kr4p8"), ExtResource("2_6epbw")])
+weapons = Array[ExtResource("2_i825w")]([ExtResource("2_6epbw")])
 
-[node name="Collider" type="CollisionShape3D" parent="."]
+[node name="Collider" type="CollisionShape3D" parent="." unique_id=1837850884]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
 shape = SubResource("CapsuleShape3D_gdq8c")
 
-[node name="Head" type="Node3D" parent="."]
+[node name="Body" type="MeshInstance3D" parent="." unique_id=521955482]
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_slop")
+
+[node name="HeadMesh" type="MeshInstance3D" parent="Body" unique_id=1536360651]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
+visible = false
+layers = 2
+mesh = SubResource("SphereMesh_head")
+surface_material_override/0 = SubResource("StandardMaterial3D_slop")
+
+[node name="HeadMesh#EyeLeft" type="MeshInstance3D" parent="." unique_id=227934931]
+transform = Transform3D(0.08, 0, 0, 0, 0.08, 0, 0, 0, 0.08, -0.12, 0.08, 0.28)
+visible = false
+layers = 2
+mesh = SubResource("SphereMesh_head")
+surface_material_override/0 = SubResource("StandardMaterial3D_eye")
+
+[node name="HeadMesh#EyeRight" type="MeshInstance3D" parent="." unique_id=355347678]
+transform = Transform3D(0.08, 0, 0, 0, 0.08, 0, 0, 0, 0.08, 0.12, 0.08, 0.28)
+visible = false
+layers = 2
+mesh = SubResource("SphereMesh_head")
+surface_material_override/0 = SubResource("StandardMaterial3D_eye")
+
+[node name="Head" type="Node3D" parent="." unique_id=1500962282]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
-[node name="Camera" type="Camera3D" parent="Head"]
+[node name="Camera" type="Camera3D" parent="Head" unique_id=1996303614]
 cull_mask = 1048573
 current = true
 fov = 80.0
 
-[node name="SubViewportContainer" type="SubViewportContainer" parent="Head/Camera"]
+[node name="SubViewportContainer" type="SubViewportContainer" parent="Head/Camera" unique_id=1703694093]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -37,42 +78,42 @@ grow_horizontal = 2
 grow_vertical = 2
 stretch = true
 
-[node name="SubViewport" type="SubViewport" parent="Head/Camera/SubViewportContainer"]
+[node name="SubViewport" type="SubViewport" parent="Head/Camera/SubViewportContainer" unique_id=214298572]
 transparent_bg = true
 handle_input_locally = false
 msaa_3d = 1
 size = Vector2i(1280, 720)
 render_target_update_mode = 4
 
-[node name="CameraItem" type="Camera3D" parent="Head/Camera/SubViewportContainer/SubViewport"]
+[node name="CameraItem" type="Camera3D" parent="Head/Camera/SubViewportContainer/SubViewport" unique_id=454610381]
 cull_mask = 1047554
 fov = 40.0
 
-[node name="Container" type="Node3D" parent="Head/Camera/SubViewportContainer/SubViewport/CameraItem"]
+[node name="Container" type="Node3D" parent="Head/Camera/SubViewportContainer/SubViewport/CameraItem" unique_id=221103149]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, -1, -2.25)
 
-[node name="Muzzle" type="AnimatedSprite3D" parent="Head/Camera/SubViewportContainer/SubViewport/CameraItem"]
+[node name="Muzzle" type="AnimatedSprite3D" parent="Head/Camera/SubViewportContainer/SubViewport/CameraItem" unique_id=1071923109]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, -0.75, -6)
 layers = 2
 sprite_frames = ExtResource("4_m6ukc")
 frame = 2
 
-[node name="RayCast" type="RayCast3D" parent="Head/Camera"]
+[node name="RayCast" type="RayCast3D" parent="Head/Camera" unique_id=1431840997]
 exclude_parent = false
 target_position = Vector3(0, 0, -10)
 collide_with_areas = true
 
-[node name="Shadow" type="Decal" parent="."]
+[node name="Shadow" type="Decal" parent="." unique_id=1883918296]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.9, 0)
 size = Vector3(1, 2, 1)
 texture_albedo = ExtResource("2_b0fo8")
 modulate = Color(1, 1, 1, 0.705882)
 normal_fade = 0.5
 
-[node name="SoundFootsteps" type="AudioStreamPlayer" parent="."]
+[node name="SoundFootsteps" type="AudioStreamPlayer" parent="." unique_id=1571603396]
 stream = ExtResource("5_ics1s")
 volume_db = -5.0
 autoplay = true
 
-[node name="Cooldown" type="Timer" parent="."]
+[node name="Cooldown" type="Timer" parent="." unique_id=376055345]
 one_shot = true

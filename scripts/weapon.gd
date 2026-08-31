@@ -5,6 +5,7 @@ class_name Weapon
 @export var model: PackedScene # Model of the weapon
 @export var position: Vector3 # On-screen position
 @export var rotation: Vector3 # On-screen rotation
+@export var scale: Vector3 = Vector3.ONE # On-screen scale
 @export var muzzle_position: Vector3 # On-screen position of muzzle flash
 
 @export_subgroup("Properties")
@@ -17,6 +18,10 @@ class_name Weapon
 
 @export var min_knockback: Vector2 = Vector2(0.001, 0.001) # x for vertical knockback, y for horizontal knockback
 @export var max_knockback: Vector2 = Vector2(0.0025, 0.002) # x for vertical knockback, y for horizontal knockback
+
+@export_subgroup("Projectile")
+@export var projectile_scene: PackedScene # If set, spawns projectile instead of hitscan
+@export var projectile_speed: float = 25.0
 
 @export_subgroup("Sounds")
 @export var sound_shoot: String # Sound path

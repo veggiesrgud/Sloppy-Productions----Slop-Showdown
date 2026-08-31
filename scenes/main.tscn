@@ -5,12 +5,9 @@
 [ext_resource type="Script" uid="uid://by0qn28x1i1jj" path="res://scripts/hud.gd" id="3_s8mkj"]
 [ext_resource type="FontFile" uid="uid://biqtga8moh7ah" path="res://fonts/lilita_one_regular.ttf" id="3_w27de"]
 [ext_resource type="PackedScene" uid="uid://dpm3l05d7fu35" path="res://objects/platform.tscn" id="5_3s40e"]
-[ext_resource type="PackedScene" uid="uid://r7rt7pth4u7o" path="res://objects/wall_low.tscn" id="5_6vel1"]
-[ext_resource type="PackedScene" uid="uid://c71evdjblk5wp" path="res://objects/wall_high.tscn" id="7_cabne"]
 [ext_resource type="PackedScene" uid="uid://bvx5cvigosg0s" path="res://objects/platform_large_grass.tscn" id="7_wggef"]
 [ext_resource type="PackedScene" uid="uid://d2g78tpqbyf5g" path="res://objects/enemy.tscn" id="8_7ty2f"]
 [ext_resource type="PackedScene" uid="uid://oqfhfp1a80qd" path="res://objects/cloud.tscn" id="10_5ksau"]
-
 [sub_resource type="LabelSettings" id="LabelSettings_fpmwk"]
 font = ExtResource("3_w27de")
 font_size = 36
@@ -79,14 +76,8 @@ player = NodePath("../../Player")
 
 [node name="Level" type="Node" parent="." unique_id=1748836644]
 
-[node name="wall-low" parent="Level" unique_id=1331411824 instance=ExtResource("5_6vel1")]
-transform = Transform3D(0.965926, 0, 0.258819, 0, 1, 0, -0.258819, 0, 0.965926, -1.92088, 1.05, -6.90166)
-
-[node name="wall-low3" parent="Level" unique_id=676185619 instance=ExtResource("5_6vel1")]
-transform = Transform3D(-1, 0, -1.19209e-07, 0, 1, 0, 1.19209e-07, 0, -1, 6.07912, 1.05, 6.59834)
-
 [node name="platform" parent="Level" unique_id=1577014397 instance=ExtResource("5_3s40e")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, 6.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4085274, 2.531042, 14.904665)
 
 [node name="platform2" parent="Level" unique_id=1962163043 instance=ExtResource("5_3s40e")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 2.5, -2.5)
@@ -95,28 +86,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 2.5, -2.5)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 3, -3.5)
 
 [node name="platform4" parent="Level" unique_id=1667612161 instance=ExtResource("5_3s40e")]
-transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 7, 1, -2)
-
-[node name="wall-high" parent="Level" unique_id=1578391320 instance=ExtResource("7_cabne")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 1.5, 4)
-
-[node name="wall-high2" parent="Level" unique_id=545025321 instance=ExtResource("7_cabne")]
-transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 11.5, 3, -5.5)
+transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 13.662595, 3.9295835, 3.6182466)
 
 [node name="platform-large-grass" parent="Level" unique_id=510059275 instance=ExtResource("7_wggef")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
-
-[node name="platform-large-grass2" parent="Level" unique_id=2138675056 instance=ExtResource("7_wggef")]
-transform = Transform3D(0.965926, 0, 0.258819, 0, 1, 0, -0.258819, 0, 0.965926, -2, 0.5, -6)
-
-[node name="platform-large-grass3" parent="Level" unique_id=1910704433 instance=ExtResource("7_wggef")]
-transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, -6, 1, 2.5)
-
-[node name="platform-large-grass5" parent="Level" unique_id=712189155 instance=ExtResource("7_wggef")]
-transform = Transform3D(0.866026, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866026, 12, 2.5, -5)
-
-[node name="platform-large-grass4" parent="Level" unique_id=851780756 instance=ExtResource("7_wggef")]
-transform = Transform3D(0.965926, 0, 0.258819, 0, 1, 0, -0.258819, 0, 0.965926, 5, 0.5, 5.5)
+transform = Transform3D(12.086743, 0, 0, 0, 1, 0, 0, 0, 16.050705, -0.13114, -0.616642, -0.10854268)
 
 [node name="Decoration" type="Node" parent="." unique_id=912926462]
 

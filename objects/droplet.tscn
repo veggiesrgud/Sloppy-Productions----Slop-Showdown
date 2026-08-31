@@ -1,0 +1,37 @@
+[gd_scene load_steps=3 format=3 uid="uid://viag64qpcw8cj"]
+
+[ext_resource type="Script" path="res://objects/droplet.gd" id="1_abc"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_1"]
+radius = 0.07
+
+[sub_resource type="SphereMesh" id="SphereMesh_1"]
+radius = 0.07
+height = 0.14
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.18, 0.55, 0.95, 1)
+transparency = 1
+roughness = 0.15
+metallic = 0.05
+albedo_texture = null
+emission_enabled = false
+clearcoat_enabled = true
+clearcoat = 1.0
+clearcoat_roughness = 0.1
+
+[node name="Droplet" type="Area3D" groups=["projectile"]]
+script = ExtResource("1_abc")
+collision_layer = 4
+collision_mask = 1
+monitoring = true
+monitorable = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_1")
+debug_color = Color(0.2, 0.6, 1, 0.42)
+
+[node name="SphereVisual" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.85, 0, 0, 0, 1.35, 0, 0, 0, 0.85, 0, -0.05, 0)
+mesh = SubResource("SphereMesh_1")
+surface_material_override/0 = SubResource("StandardMaterial3D_1")

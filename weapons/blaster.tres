@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Weapon" load_steps=4 format=3 uid="uid://c56y8pqoyk15f"]
+[gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://c56y8pqoyk15f"]
 
 [ext_resource type="Texture2D" uid="uid://2jld33y6h5pq" path="res://sprites/crosshair.png" id="1_2onsr"]
 [ext_resource type="PackedScene" uid="uid://b2p7bbkuxf7m" path="res://models/blaster.glb" id="1_x0glg"]

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://box50by8bg07a"
+path="res://.godot/imported/window-brown-round-low.obj-da5c0b80050402b280df822a64652e09.mesh"
+
+[deps]
+
+files=["res://.godot/imported/window-brown-round-low.obj-da5c0b80050402b280df822a64652e09.mesh"]
+
+source_file="res://models/fps-kit/buildings/kenney-modular-buildings/Models/OBJ format/window-brown-round-low.obj"
+dest_files=["res://.godot/imported/window-brown-round-low.obj-da5c0b80050402b280df822a64652e09.mesh", "res://.godot/imported/window-brown-round-low.obj-da5c0b80050402b280df822a64652e09.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
