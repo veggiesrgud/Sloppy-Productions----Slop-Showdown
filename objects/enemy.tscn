@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://d2g78tpqbyf5g"]
+[gd_scene format=3 uid="uid://d2g78tpqbyf5g"]
 
 [ext_resource type="PackedScene" uid="uid://lde2xq3vq635" path="res://models/enemy-flying.glb" id="1_3v8nl"]
 [ext_resource type="Script" uid="uid://b6udw8uhlp4ei" path="res://objects/enemy.gd" id="1_jg24b"]
@@ -8,44 +8,42 @@
 [sub_resource type="SphereShape3D" id="SphereShape3D_iix87"]
 radius = 0.75
 
-[node name="enemy-flying" type="Area3D"]
+[node name="enemy-flying" type="Area3D" unique_id=1611588577]
 script = ExtResource("1_jg24b")
 
-[node name="enemy-flying" parent="." instance=ExtResource("1_3v8nl")]
+[node name="enemy-flying" parent="." unique_id=320027097 instance=ExtResource("1_3v8nl")]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=813131482]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
 shape = SubResource("SphereShape3D_iix87")
 
-[node name="RayCast" type="RayCast3D" parent="."]
+[node name="RayCast" type="RayCast3D" parent="." unique_id=1831630622]
 target_position = Vector3(0, 0, 26)
-enabled = true
 collide_with_areas = true
-collide_with_bodies = true
 
-[node name="MuzzleA" type="AnimatedSprite3D" parent="."]
+[node name="MuzzleA" type="AnimatedSprite3D" parent="." unique_id=1200303317]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -0.45, 0.3, 0.4)
 sprite_frames = ExtResource("3_iblw5")
 frame = 2
 
-[node name="MuzzleB" type="AnimatedSprite3D" parent="."]
+[node name="MuzzleB" type="AnimatedSprite3D" parent="." unique_id=418622498]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.45, 0.3, 0.4)
 sprite_frames = ExtResource("3_iblw5")
 frame = 2
 
 [node name="WaterGunLeft" type="Node3D" parent="." unique_id=987654321]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -0.45, 0.15, 0.35)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -0.665074, -1.5347116, 1.0241755)
 
 [node name="WaterBlasterLeft" parent="WaterGunLeft" unique_id=987654322 instance=ExtResource("4_wblaster")]
-transform = Transform3D(6.12323e-17, 0, -1, 0, 1, 0, 1, 0, 6.12323e-17, 0, 0, 0)
+transform = Transform3D(6.12323e-17, 0, -1, 0, 1, 0, 1, 0, 6.12323e-17, -0.8838184, 2.9002752, 0)
 
-[node name="WaterGunRight" type="Node3D" parent="." unique_id=987654323]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.45, 0.15, 0.35)
+[node name="WaterGunRight" type="Node3D" parent="WaterGunLeft" unique_id=987654323]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0, 0)
 
-[node name="WaterBlasterRight" parent="WaterGunRight" unique_id=987654324 instance=ExtResource("4_wblaster")]
-transform = Transform3D(6.12323e-17, 0, -1, 0, 1, 0, 1, 0, 6.12323e-17, 0, 0, 0)
+[node name="WaterBlasterRight" parent="WaterGunLeft/WaterGunRight" unique_id=987654324 instance=ExtResource("4_wblaster")]
+transform = Transform3D(6.12323e-17, 0, -1, 0, 1, 0, 1, 0, 6.12323e-17, -0.8838184, 2.9002748, 0)
 
-[node name="Timer" type="Timer" parent="."]
+[node name="Timer" type="Timer" parent="." unique_id=629727000]
 wait_time = 0.25
 autostart = true
 
