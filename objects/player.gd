@@ -485,7 +485,11 @@ func change_weapon():
 	_autofit_weapon_model(weapon_model)
 	
 	raycast.target_position = Vector3(0, 0, -1) * weapon.max_distance
-n	crosshair.texture = weapon.crosshair
+
+
+
+
+	crosshair.texture = weapon.crosshair
 
 
 func _apply_weapon_layer(node: Node) -> void:
