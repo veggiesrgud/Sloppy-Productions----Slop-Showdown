@@ -31,7 +31,13 @@ const HAT_NODES_BY_ITEM := {
 	"sombrero": "Sombrero",
 	"wizard_hat": "WizardHat"
 }
-const WEAPON_NODES_BY_ITEM := {"sword": "Sword", "sword_big": "SwordBig", "axe": "Axe"}
+const WEAPON_NODES_BY_ITEM := {"sword": "Sword", "sword_big": "SwordBig", "axe": "Axe", "water_gun": "WaterGun"}
+const DROPLET_SCENE: PackedScene = preload("res://objects/droplet.tscn")
+const WATER_WEAPON_ID := "water_gun"
+const MELEE_DAMAGE := 25.0
+const MELEE_RANGE := 3.2
+const WATER_DAMAGE := 25.0
+const WATER_SPEED := 22.0
 const BACKPACK_NODES_BY_ITEM := {"backpack": "Backpack"}
 const HEAD_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach/"
 const HAND_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach/"
@@ -87,6 +93,12 @@ var _equipped_hat_visual_id := ""
 
 
 func _enter_tree():
+	# Main slop map uses fixed name "Player" - always local authority (ignore stale net peer)
+	if str(name) == "Player":
+		set_multiplayer_authority(1)
+		if has_node("SpringArmOffset/SpringArm3D/Camera3D"):
+			$SpringArmOffset/SpringArm3D/Camera3D.current = true
+		return
 	# Offline single-player support: if no multiplayer peer, make local player authority
 	if not multiplayer.has_multiplayer_peer():
 		set_multiplayer_authority(1)
@@ -142,8 +154,11 @@ func _ready():
 		nickname.visible = false
 
 
+func _is_local_main_player() -> bool:
+	return str(name) == "Player" or not multiplayer.has_multiplayer_peer() or is_multiplayer_authority()
+
 func _on_camera_perspective_changed(first_person: bool) -> void:
-	if not is_multiplayer_authority():
+	if not _is_local_main_player():
 		return
 	_body.visible = true
 	_bottom_mesh.visible = not first_person
@@ -180,7 +195,9 @@ func _align_pickup_area_with_camera() -> void:
 
 
 func _physics_process(delta):
-	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
+	if str(name) == "Player":
+		pass # main map player always simulates (fixes stale peer freeze / floating Idle)
+	elif multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		return
 	if not multiplayer.has_multiplayer_peer() and not is_inside_tree():
 		return
@@ -195,12 +212,13 @@ func _physics_process(delta):
 		elif current_scene.has_method("is_inventory_visible") and current_scene.is_inventory_visible():
 			should_freeze = true
 
-	if is_attacking or is_collecting:
+	if is_collecting:
 		velocity.x = 0
 		velocity.z = 0
 		_apply_gravity(delta)
 		move_and_slide()
 		return
+	# Attacking no longer roots you - swing while moving (only blocks new swings)
 
 	if should_freeze:
 		_freeze()
@@ -214,7 +232,7 @@ func _physics_process(delta):
 		_request_animation(&"Emote2", true)
 		return
 
-	if Input.is_action_just_pressed("attack") and is_on_floor():
+	if Input.is_action_just_pressed("attack"):
 		_start_attack()
 		return
 
@@ -240,7 +258,9 @@ func _physics_process(delta):
 	if collided:
 		_push_collided_items()
 
-	_request_animation(_body.get_movement_animation(velocity))
+	# Don't stomp the swing anim (its finish lands melee damage + clears is_attacking)
+	if not is_attacking:
+		_request_animation(_body.get_movement_animation(velocity))
 
 
 func _apply_gravity(delta: float) -> void:
@@ -250,26 +270,75 @@ func _apply_gravity(delta: float) -> void:
 	velocity.y -= gravity * gravity_multiplier * delta
 
 
+func _equipped_weapon_id() -> String:
+	if player_inventory and player_inventory.equipped_weapon:
+		return str(player_inventory.equipped_weapon.item_id)
+	return ""
+
 func _start_attack() -> void:
-	if is_attacking or is_collecting or not is_on_floor():
+	if is_attacking or is_collecting:
 		return
 	is_attacking = true
-	velocity.x = 0
-	velocity.z = 0
 	_request_animation(&"Attack1", true)
+	# Water gun fires instantly on click so it feels responsive
+	if _equipped_weapon_id() == WATER_WEAPON_ID:
+		_shoot_water_gun()
 
 
 func _on_animation_finished(animation_name: StringName) -> void:
 	match animation_name:
 		&"Attack1":
+			# Melee weapons land when the swing finishes (water gun already fired)
+			if _equipped_weapon_id() != WATER_WEAPON_ID:
+				_perform_melee_attack()
 			is_attacking = false
 		&"Emote2":
 			is_collecting = false
 
 
+func _perform_melee_attack() -> void:
+	var origin := global_position + Vector3(0, 1.0, 0)
+	for node in get_tree().get_nodes_in_group("enemy"):
+		if not (node is Node3D):
+			continue
+		var target := (node as Node3D).global_position
+		if origin.distance_to(target) > MELEE_RANGE:
+			continue
+		if node.has_method("damage"):
+			node.damage(MELEE_DAMAGE)
+
+
+func _shoot_water_gun() -> void:
+	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
+	if cam == null:
+		return
+	var dir := -cam.global_transform.basis.z.normalized()
+	var droplet = DROPLET_SCENE.instantiate()
+	if droplet.has_method("setup"):
+		droplet.setup(dir, WATER_SPEED, WATER_DAMAGE)
+	else:
+		droplet.set("velocity", dir * WATER_SPEED)
+	var world = get_tree().current_scene
+	if world:
+		world.add_child(droplet)
+	else:
+		get_tree().root.add_child(droplet)
+	droplet.global_position = cam.global_position + dir * 0.8 + Vector3(0, -0.1, 0)
+	droplet.look_at(droplet.global_position + dir, Vector3.UP)
+	var audio = get_node_or_null("/root/Audio")
+	if audio and audio.has_method("play"):
+		audio.play("sounds/blaster.ogg")
+
+
 func _request_animation(state: StringName, restart: bool = false) -> void:
 	if not ALLOWED_ANIMATION_STATES.has(state):
 		return
+	# If a new anim takes over mid-swing/pickup, the old finish signal never
+	# fires - clear the flags here or the pose freezes forever
+	if state != &"Attack1" and is_attacking:
+		is_attacking = false
+	if state != &"Emote2" and is_collecting:
+		is_collecting = false
 	if not restart and _last_requested_animation == state:
 		return
 	_last_requested_animation = state
@@ -349,9 +418,11 @@ func _push_collided_items() -> void:
 
 
 func _process(_delta):
-	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
+	if str(name) == "Player":
+		pass # main map player always processes
+	elif multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		return
-	if not multiplayer.has_multiplayer_peer():
+	elif not multiplayer.has_multiplayer_peer():
 		# allow offline processing as authority
 		pass
 	elif not is_multiplayer_authority():
@@ -378,7 +449,7 @@ func _freeze():
 
 func _move() -> void:
 	var input_direction: Vector2 = Vector2.ZERO
-	if is_multiplayer_authority() or not multiplayer.has_multiplayer_peer():
+	if str(name) == "Player" or is_multiplayer_authority() or not multiplayer.has_multiplayer_peer():
 		input_direction = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 
 	var direction: Vector3 = transform.basis * Vector3(input_direction.x, 0, input_direction.y).normalized()
@@ -818,6 +889,7 @@ func _add_starting_items():
 		"sword",
 		"sword_big",
 		"axe",
+		"water_gun",
 		"chicken_leg",
 		"bone",
 		"chalice"
@@ -827,6 +899,14 @@ func _add_starting_items():
 		var item = ItemDatabase.get_item(item_id)
 		if item:
 			player_inventory.add_item(item, 1)
+
+	# Start with the water gun equipped so LMB shoots water right away
+	for i in player_inventory.slots.size():
+		var slot = player_inventory.slots[i]
+		if slot and slot.item_id == WATER_WEAPON_ID:
+			player_inventory.equip_from_slot(i, Item.ItemType.WEAPON)
+			break
+	_sync_equipment_appearance()
 
 
 func pickup() -> void:

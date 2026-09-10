@@ -11,7 +11,8 @@ var _current_state: StringName = &""
 
 
 func apply_rotation(_velocity: Vector3) -> void:
-	var new_rotation_y = lerp_angle(rotation.y, atan2(-_velocity.x, -_velocity.z), LERP_VELOCITY)
+	# Player root is rotated PI, so face travel dir with +Z convention (fixes moonwalking)
+	var new_rotation_y = lerp_angle(rotation.y, atan2(_velocity.x, _velocity.z), LERP_VELOCITY)
 	rotation.y = new_rotation_y
 
 

@@ -37,7 +37,12 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not is_multiplayer_authority():
+	var parent_player = get_parent()
+	if parent_player and str(parent_player.name) == "Player":
+		pass # main map FPS camera always listens
+	elif not multiplayer.has_multiplayer_peer():
+		pass
+	elif not is_multiplayer_authority():
 		return
 
 	var current_scene := get_tree().get_current_scene()

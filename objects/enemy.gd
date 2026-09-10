@@ -59,7 +59,8 @@ func _process(delta):
 		var dir = (target - global_position)
 		dir.y = 0
 		if dir.length() > 0.1:
-			var target_basis = Basis.looking_at(-dir.normalized(), Vector3.UP)
+			# Model front (guns/muzzles) is +Z, so face player with model-front basis
+			var target_basis = Basis.looking_at(dir.normalized(), Vector3.UP, true)
 			global_transform.basis = global_transform.basis.slerp(target_basis, delta * turn_speed)
 		# Follow player slowly when close (chase)
 		if dist < 20 and dist > 3:
@@ -102,8 +103,8 @@ func is_player_in_sight() -> bool:
 	var dist = to_player_world.length()
 	if dist > detection_range:
 		return false
-	# FOV check - forward is -Z
-	var forward = -global_transform.basis.z.normalized()
+	# FOV check - model forward is +Z (guns/muzzles side)
+	var forward = global_transform.basis.z.normalized()
 	var dir_norm = to_player_world.normalized()
 	var angle = rad_to_deg(acos(clamp(forward.dot(dir_norm), -1.0, 1.0)))
 	if angle > detection_fov * 0.5:

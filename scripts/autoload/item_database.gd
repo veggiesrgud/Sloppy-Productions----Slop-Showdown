@@ -10,6 +10,7 @@ const BACKPACK_ICON: Texture2D = preload("res://assets/items/backpacks/icons/bac
 const SWORD_ICON: Texture2D = preload("res://assets/items/weapons/icons/sword.png")
 const SWORD_BIG_ICON: Texture2D = preload("res://assets/items/weapons/icons/sword_big.png")
 const AXE_ICON: Texture2D = preload("res://assets/items/weapons/icons/axe.png")
+const WATERGUN_ICON: Texture2D = preload("res://sprites/crosshair.png")
 const CHICKEN_LEG_ICON: Texture2D = preload("res://assets/items/misc/icons/chicken_leg.png")
 const BONE_ICON: Texture2D = preload("res://assets/items/misc/icons/bone.png")
 const CHALICE_ICON: Texture2D = preload("res://assets/items/misc/icons/chalice.png")
@@ -101,6 +102,16 @@ func _create_sample_items():
 		AXE_ICON,
 		true,
 		95
+	)
+	_create_item(
+		"water_gun",
+		"Water Gun",
+		"Shoots splashing water droplets.",
+		Item.ItemType.WEAPON,
+		"res://scenes/items/weapons/water_gun.tscn",
+		WATERGUN_ICON,
+		true,
+		110
 	)
 	_create_item(
 		"chicken_leg",

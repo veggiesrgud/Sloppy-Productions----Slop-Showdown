@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://oqfhfp1a80qd" path="res://objects/cloud.tscn" id="10_5ksau"]
 [ext_resource type="PackedScene" uid="uid://bclq8vh1x2goy" path="res://scenes/ui/inventory_ui.tscn" id="11_inv"]
 [ext_resource type="PackedScene" uid="uid://ccencq0lcd3ph" path="res://scenes/ui/multiplayer_chat_ui.tscn" id="12_chat"]
+[ext_resource type="PackedScene" uid="uid://bx7mq8t8hjn7q" path="res://scenes/ui/main_menu_ui.tscn" id="13_menu"]
 [ext_resource type="Script" uid="uid://6qvd1n5u5d24" path="res://scripts/main_with_inventory.gd" id="16_maininv"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_fpmwk"]
@@ -28,7 +29,10 @@ script = ExtResource("16_maininv")
 environment = ExtResource("1_q8fpv")
 
 [node name="Player" parent="." unique_id=1938858786 instance=ExtResource("2_elriq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.243168, 0)
+
+[node name="MainMenuUI" parent="." unique_id=2006763256 instance=ExtResource("13_menu")]
+process_mode = 3
 
 [node name="InventoryUI" parent="." unique_id=2001567843 instance=ExtResource("11_inv")]
 visible = false
@@ -109,7 +113,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 3, -3.5)
 transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 13.662595, 3.9295835, 3.6182466)
 
 [node name="platform-large-grass" parent="Level" unique_id=510059275 instance=ExtResource("7_wggef")]
-transform = Transform3D(12.086743, 0, 0, 0, 1, 0, 0, 0, 16.050705, 0.019985199, -0.8836293, -0.015769005)
+transform = Transform3D(12.086743, 0, 0, 0, 1, 0, 0, 0, 16.050705, 0.09128857, -0.40978718, 0.019369602)
 
 [node name="GroundCollision" type="StaticBody3D" parent="Level" unique_id=1705032705]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)

@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" uid="uid://dj7318sc4o37l" path="res://assets/items/weapons/models/sword_big.fbx" id="17_sword_big"]
 [ext_resource type="PackedScene" uid="uid://cc8gkp6u5tr2e" path="res://assets/items/backpacks/models/backpack.fbx" id="27_backpack"]
 [ext_resource type="PackedScene" uid="uid://dghg7ospl0imy" path="res://assets/items/weapons/models/axe.fbx" id="28_axe"]
+[ext_resource type="PackedScene" uid="uid://jkujgxcdjm8f" path="res://models/WaterBlaster.fbx" id="28_watergun"]
+[ext_resource type="Texture2D" uid="uid://8ggihh27mlrr" path="res://sprites/blob_shadow.png" id="29_shadow"]
 [ext_resource type="PackedScene" uid="uid://i1ar5au3vy7a" path="res://assets/items/hats/models/fedora.glb" id="34_fedora"]
 [ext_resource type="PackedScene" uid="uid://bcfswa3gh780w" path="res://assets/items/hats/models/headphones.glb" id="39_headphones"]
 [ext_resource type="PackedScene" uid="uid://dogjmlb8ci3gr" path="res://assets/items/hats/models/pirate_hat.glb" id="41_pirate"]
@@ -4552,7 +4554,15 @@ red_texture = SubResource("CompressedTexture2D_xgf8p")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0024593314, 0.828, 0.010000005)
 shape = SubResource("CapsuleShape3D_mx45w")
 
+[node name="Shadow" type="Decal" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+size = Vector3(1.2, 2, 1.2)
+texture_albedo = ExtResource("29_shadow")
+modulate = Color(1, 1, 1, 0.7)
+normal_fade = 0.5
+
 [node name="GodotRobot3D" type="Node3D" parent="." unique_id=614086565 node_paths=PackedStringArray("_character", "animation_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, 0)
 script = ExtResource("2_mexc5")
 _character = NodePath("..")
 animation_player = NodePath("AnimationPlayer")
@@ -4787,6 +4797,10 @@ visible = false
 
 [node name="Axe" parent="GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach" unique_id=352347370 instance=ExtResource("28_axe")]
 transform = Transform3D(0.75, -1.1175871e-08, 1.0128133e-08, -1.3154931e-08, 0, -0.7499999, -7.450581e-09, 0.7499998, 1.8626451e-09, 0.013932824, 0.23088384, 0.3978039)
+visible = false
+
+[node name="WaterGun" parent="GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach" unique_id=352347371 instance=ExtResource("28_watergun")]
+transform = Transform3D(0, 0, -0.25, 0, 0.25, 0, 0.25, 0, 0, 0.0015582442, 0.21649343, 0.15789248)
 visible = false
 
 [node name="BackAttach" type="BoneAttachment3D" parent="GodotRobot3D/RobotArmature/Skeleton3D" unique_id=1338054728]
