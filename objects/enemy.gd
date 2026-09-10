@@ -55,7 +55,7 @@ func _process(delta):
 	
 	# Always turn to face player if within detection_range (even if outside FOV, so they can acquire)
 	if dist < detection_range:
-		var target = player.position + Vector3(0, 0.5, 0)
+		var target = player.global_position + Vector3(0, 0.5, 0)
 		var dir = (target - global_position)
 		dir.y = 0
 		if dir.length() > 0.1:
@@ -114,10 +114,11 @@ func is_player_in_sight() -> bool:
 	raycast.force_raycast_update()
 	if raycast.is_colliding():
 		var col = raycast.get_collider()
-		# Only shoot if ray hits player (not wall) - also accept parent of collider if player is CharacterBody
-		if col and col.has_method("damage"):
-			# Check if collider is player or child of player
-			if col == player or col.get_parent() == player or col.is_in_group("player"):
+		# Only shoot if ray hits player (not wall) - robot Character has damage() now, also accept name/group
+		if col:
+			if col == player or col.get_parent() == player or (col is Node and col.is_in_group("player")) or (col is Node and col.name == "Player"):
+				return dist <= shoot_range
+			if col.has_method("damage"):
 				return dist <= shoot_range
 		return false
 	# No hit means clear line but player is far - still consider in sight if within range
@@ -133,7 +134,7 @@ func _on_timer_timeout():
 	var can_shoot = false
 	if raycast.is_colliding():
 		var col = raycast.get_collider()
-		if col and col.has_method("damage") and (col == player or col.get_parent() == player or col.is_in_group("player")):
+		if col and (col == player or col.get_parent() == player or (col is Node and col.is_in_group("player")) or (col is Node and col.name == "Player") or col.has_method("damage")):
 			can_shoot = true
 	else:
 		# No wall hit means clear line

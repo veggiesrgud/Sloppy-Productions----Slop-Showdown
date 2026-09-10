@@ -1,13 +1,16 @@
 [gd_scene format=3 uid="uid://dxvvlck8lej3f"]
 
 [ext_resource type="Environment" uid="uid://jvmpkdwaeaq" path="res://scenes/main-environment.tres" id="1_q8fpv"]
-[ext_resource type="PackedScene" uid="uid://dl2ed4gkybggf" path="res://objects/player.tscn" id="2_elriq"]
+[ext_resource type="PackedScene" uid="uid://cffjduipbb3s5" path="res://scenes/level/player.tscn" id="2_elriq"]
 [ext_resource type="Script" uid="uid://by0qn28x1i1jj" path="res://scripts/hud.gd" id="3_s8mkj"]
 [ext_resource type="FontFile" uid="uid://biqtga8moh7ah" path="res://fonts/lilita_one_regular.ttf" id="3_w27de"]
 [ext_resource type="PackedScene" uid="uid://dpm3l05d7fu35" path="res://objects/platform.tscn" id="5_3s40e"]
 [ext_resource type="PackedScene" uid="uid://bvx5cvigosg0s" path="res://objects/platform_large_grass.tscn" id="7_wggef"]
 [ext_resource type="PackedScene" uid="uid://d2g78tpqbyf5g" path="res://objects/enemy.tscn" id="8_7ty2f"]
 [ext_resource type="PackedScene" uid="uid://oqfhfp1a80qd" path="res://objects/cloud.tscn" id="10_5ksau"]
+[ext_resource type="PackedScene" uid="uid://bclq8vh1x2goy" path="res://scenes/ui/inventory_ui.tscn" id="11_inv"]
+[ext_resource type="PackedScene" uid="uid://ccencq0lcd3ph" path="res://scenes/ui/multiplayer_chat_ui.tscn" id="12_chat"]
+[ext_resource type="Script" uid="uid://6qvd1n5u5d24" path="res://scripts/main_with_inventory.gd" id="16_maininv"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_fpmwk"]
 font = ExtResource("3_w27de")
@@ -15,13 +18,28 @@ font_size = 36
 outline_size = 12
 outline_color = Color(0, 0, 0, 0.470588)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(120, 1, 120)
+
 [node name="Main" type="Node3D" unique_id=1176673032]
+script = ExtResource("16_maininv")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=529470734]
 environment = ExtResource("1_q8fpv")
 
-[node name="Player" parent="." unique_id=1938858786 node_paths=PackedStringArray("crosshair") instance=ExtResource("2_elriq")]
-crosshair = NodePath("../HUD/Crosshair")
+[node name="Player" parent="." unique_id=1938858786 instance=ExtResource("2_elriq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="InventoryUI" parent="." unique_id=2001567843 instance=ExtResource("11_inv")]
+visible = false
+
+[node name="MultiplayerChatUI" parent="." unique_id=1655363280 instance=ExtResource("12_chat")]
+visible = false
+anchors_preset = 2
+offset_left = 0.0
+offset_top = -268.0
+offset_right = 480.0
+offset_bottom = 0.0
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=1871256661]
 transform = Transform3D(-0.422618, -0.694272, 0.582563, 0, 0.642788, 0.766044, -0.906308, 0.323744, -0.271654, 0, 0, 0)
@@ -91,7 +109,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 3, -3.5)
 transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 13.662595, 3.9295835, 3.6182466)
 
 [node name="platform-large-grass" parent="Level" unique_id=510059275 instance=ExtResource("7_wggef")]
-transform = Transform3D(12.086743, 0, 0, 0, 1, 0, 0, 0, 16.050705, -0.13114, -0.616642, -0.10854268)
+transform = Transform3D(12.086743, 0, 0, 0, 1, 0, 0, 0, 16.050705, 0.019985199, -0.8836293, -0.015769005)
+
+[node name="GroundCollision" type="StaticBody3D" parent="Level" unique_id=1705032705]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Level/GroundCollision" unique_id=1705032706]
+shape = SubResource("BoxShape3D_ground")
 
 [node name="Decoration" type="Node" parent="." unique_id=912926462]
 
