@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bx7mq8t8hjn7q"]
 
-[ext_resource type="Script" uid="uid://c9x8y7z6a5b4c3d2" path="res://scripts/ui/main_menu_ui.gd" id="2_script"]
+[ext_resource type="Script" uid="uid://wfj6b11wkwx2" path="res://scripts/ui/main_menu_ui.gd" id="2_script"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_npnbc"]
 color = Color(0, 0, 0, 0)
@@ -11,23 +11,23 @@ content_margin_top = 4.0
 content_margin_right = 12.0
 content_margin_bottom = 4.0
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
-content_margin_left = 10.0
-content_margin_top = 4.0
-content_margin_right = 10.0
-content_margin_bottom = 4.0
-bg_color = Color(0.22, 0.25, 0.29, 0.92)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_pressed"]
 content_margin_left = 10.0
 content_margin_top = 4.0
 content_margin_right = 10.0
 content_margin_bottom = 4.0
 bg_color = Color(0.14, 0.16, 0.19, 0.96)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+content_margin_left = 10.0
+content_margin_top = 4.0
+content_margin_right = 10.0
+content_margin_bottom = 4.0
+bg_color = Color(0.22, 0.25, 0.29, 0.92)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
@@ -72,13 +72,13 @@ layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 0
 theme_override_font_sizes/font_size = 70
-text = "3D Multiplayer Template"
+text = "Welcome to Sloppy Showdown!"
 
 [node name="MainMenu" type="VBoxContainer" parent="MainContainer" unique_id=792964549]
-layout_direction = 1
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
+layout_direction = 1
 theme_override_constants/separation = 20
 alignment = 1
 
@@ -158,8 +158,8 @@ theme_override_colors/font_pressed_color = Color(0.42, 0.62, 0.82, 1)
 theme_override_colors/font_hover_color = Color(0.55, 0.75, 0.95, 1)
 theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
 text = "HOST"
 flat = true
@@ -171,8 +171,8 @@ theme_override_colors/font_pressed_color = Color(0.42, 0.62, 0.82, 1)
 theme_override_colors/font_hover_color = Color(0.55, 0.75, 0.95, 1)
 theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
 text = "JOIN"
 flat = true
