@@ -7,10 +7,9 @@ var time_left: float
 
 @onready var bar: ProgressBar = $ProgressBar
 @onready var label: Label = $ProgressBar/Label
+@onready var center_panel: Panel = $CenterPanel
 @onready var logo: TextureRect = $CenterPanel/Logo
 @onready var logo_shadow: TextureRect = $CenterPanel/LogoShadow
-
-var tween: Tween
 
 func _ready():
 	time_left = load_time
@@ -22,12 +21,22 @@ func _ready():
 		logo.texture = load("res://splash-screen.png")
 	if logo_shadow and logo.texture:
 		logo_shadow.texture = logo.texture
-	# Pulse animation for logo - subtle slop wobble
-	tween = create_tween().set_loops()
-	tween.tween_property(logo, "scale", Vector2(1.03, 1.03), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(logo, "scale", Vector2(1.0, 1.0), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# Shrink the fixed-size center panel on narrow/short screens so it never overflows
+	get_viewport().size_changed.connect(_fit_center_panel)
+	_fit_center_panel()
 	# Ensure we stay full 5 seconds - no early skip
 	set_process_input(false)
+
+
+func _fit_center_panel() -> void:
+	if not center_panel:
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	# Panel is 640x400 with 60px side margins and ~140px vertical room for bar/hint
+	var scale_factor := minf(1.0, minf((viewport_size.x - 32.0) / 640.0, (viewport_size.y - 140.0) / 400.0))
+	scale_factor = clampf(scale_factor, 0.3, 1.0)
+	center_panel.pivot_offset = center_panel.size * 0.5
+	center_panel.scale = Vector2.ONE * scale_factor
 
 func _process(delta):
 	time_left = max(0, time_left - delta)
