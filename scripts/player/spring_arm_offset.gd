@@ -63,7 +63,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	_yaw = wrapf(_yaw - event.relative.x * MOUSE_SENSIBILITY, -PI, PI)
-	_pitch = clampf(_pitch - event.relative.y * MOUSE_SENSIBILITY, -PI / 4.0, PI / 24.0)
+	_pitch = clampf(_pitch - event.relative.y * MOUSE_SENSIBILITY, -1.45, 1.45)
 	_apply_axis_lock()
 
 

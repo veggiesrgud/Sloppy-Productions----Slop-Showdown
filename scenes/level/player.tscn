@@ -4538,6 +4538,9 @@ properties/12/replication_mode = 2
 properties/13/path = NodePath("GodotRobot3D/InfrontArea3D:rotation")
 properties/13/spawn = true
 properties/13/replication_mode = 2
+properties/14/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach/WaterGun:visible")
+properties/14/spawn = true
+properties/14/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D" unique_id=1972894128 node_paths=PackedStringArray("_body", "_spring_arm_offset")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
@@ -4554,7 +4557,7 @@ red_texture = SubResource("CompressedTexture2D_xgf8p")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0024593314, 0.828, 0.010000005)
 shape = SubResource("CapsuleShape3D_mx45w")
 
-[node name="Shadow" type="Decal" parent="."]
+[node name="Shadow" type="Decal" parent="." unique_id=1219017464]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 size = Vector3(1.2, 2, 1.2)
 texture_albedo = ExtResource("29_shadow")
@@ -4800,8 +4803,7 @@ transform = Transform3D(0.75, -1.1175871e-08, 1.0128133e-08, -1.3154931e-08, 0, 
 visible = false
 
 [node name="WaterGun" parent="GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach" unique_id=352347371 instance=ExtResource("28_watergun")]
-transform = Transform3D(0, 0, -0.25, 0, 0.25, 0, 0.25, 0, 0, 0.0015582442, 0.21649343, 0.15789248)
-visible = false
+transform = Transform3D(0.04664951, -0.5981753, -0.0031996614, -0.005848879, 0.0027531001, -0.5999652, 0.59815514, 0.04667802, -0.005617032, 0.38788283, -0.673517, 1.016435)
 
 [node name="BackAttach" type="BoneAttachment3D" parent="GodotRobot3D/RobotArmature/Skeleton3D" unique_id=1338054728]
 transform = Transform3D(1, 7.1054274e-15, -2.3841848e-07, 4.3943658e-09, 0.99983, 0.018431313, 2.38378e-07, -0.018431328, 0.9998302, 8.123062e-17, 1.2942743, 0.05275946)
@@ -4822,7 +4824,6 @@ remote_path = NodePath("../../../../FirstPersonCameraSource")
 
 [node name="Fedora" parent="GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach" unique_id=525657311 instance=ExtResource("34_fedora")]
 transform = Transform3D(-4.8082526e-08, -6.661338e-16, -1.1, 1.8626451e-09, 1.1, -4.440892e-16, 1.1, 0, -4.8082512e-08, -1.1953105e-11, 0.93114185, -5.0127506e-05)
-visible = false
 
 [node name="Headphones" parent="GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach" unique_id=1013512068 instance=ExtResource("39_headphones")]
 transform = Transform3D(1.3033442, 0, 0, 0, 1.3033442, 0, 0, 0, 1.3033442, 0, 0.7998626, 0)

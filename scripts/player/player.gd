@@ -731,14 +731,21 @@ func _is_owner_request() -> bool:
 
 
 func _sync_equipment_appearance() -> void:
-	if not multiplayer.is_server() or not player_inventory:
+	if not player_inventory:
+		return
+	# Offline (no peer) counts as server - always apply locally so the gun shows
+	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
 		return
 	var weapon_id := player_inventory.equipped_weapon.item_id
+	# Default to water gun so the player is always holding it, even if equip failed
+	if weapon_id.is_empty():
+		weapon_id = WATER_WEAPON_ID
 	var hat_id := player_inventory.equipped_hat.item_id
 	var backpack_id := player_inventory.equipped_backpack.item_id
 	var nickname_height := _calculate_nickname_height(hat_id)
 	_broadcast_nickname_height(nickname_height)
-	sync_equipment_appearance.rpc(weapon_id, hat_id, backpack_id)
+	if multiplayer.has_multiplayer_peer():
+		sync_equipment_appearance.rpc(weapon_id, hat_id, backpack_id)
 	sync_equipment_appearance(weapon_id, hat_id, backpack_id)
 
 
@@ -780,9 +787,18 @@ func sync_equipment_appearance(weapon_id: String, hat_id: String, backpack_id: S
 
 func _set_equipment_visibility(weapon_id: String, hat_id: String, backpack_id: String) -> void:
 	_equipped_hat_visual_id = hat_id
+	# Guarantee the water gun is held by default - fixes invisible/empty hand
+	if weapon_id.is_empty():
+		weapon_id = WATER_WEAPON_ID
 	_set_equipment_nodes_visibility(HEAD_EQUIPMENT_PATH, HAT_NODES_BY_ITEM, hat_id)
 	_set_equipment_nodes_visibility(HAND_EQUIPMENT_PATH, WEAPON_NODES_BY_ITEM, weapon_id)
 	_set_equipment_nodes_visibility(BACK_EQUIPMENT_PATH, BACKPACK_NODES_BY_ITEM, backpack_id)
+	# Safety net: force WaterGun visible when it should be equipped
+	# (covers case where dictionary/node name drifted but inventory is correct)
+	if weapon_id == WATER_WEAPON_ID:
+		var water_gun := get_node_or_null(HAND_EQUIPMENT_PATH + "WaterGun") as Node3D
+		if water_gun:
+			water_gun.visible = true
 
 
 func _broadcast_nickname_height(height: float) -> void:
