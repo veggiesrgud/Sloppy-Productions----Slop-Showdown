@@ -3362,6 +3362,76 @@ tracks/14/path = NodePath("RobotArmature/Skeleton3D:hand.L")
 tracks/14/interp = 1
 tracks/14/loop_wrap = true
 tracks/14/keys = PackedFloat32Array(0, 1, -3.7235083e-07, 0.22562927, 2.1787496e-08)
+tracks/15/type = "rotation_3d"
+tracks/15/imported = false
+tracks/15/enabled = true
+tracks/15/path = NodePath("RobotArmature/Skeleton3D:spine.002")
+tracks/15/interp = 1
+tracks/15/loop_wrap = true
+tracks/15/keys = PackedFloat32Array(0, 1, -0.053553484, -2.3807644e-07, -1.7789096e-15, 0.998565)
+tracks/16/type = "rotation_3d"
+tracks/16/imported = false
+tracks/16/enabled = true
+tracks/16/path = NodePath("RobotArmature/Skeleton3D:spine.003")
+tracks/16/interp = 1
+tracks/16/loop_wrap = true
+tracks/16/keys = PackedFloat32Array(0, 1, -0.008336097, 1.19205154e-07, 9.937394e-10, 0.99996525)
+tracks/17/type = "rotation_3d"
+tracks/17/imported = false
+tracks/17/enabled = true
+tracks/17/path = NodePath("RobotArmature/Skeleton3D:HeadTop")
+tracks/17/interp = 1
+tracks/17/loop_wrap = true
+tracks/17/keys = PackedFloat32Array(0, 1, 0.0039396454, 1.19208366e-07, -4.6964244e-10, 0.99999225)
+tracks/18/type = "rotation_3d"
+tracks/18/imported = false
+tracks/18/enabled = true
+tracks/18/path = NodePath("RobotArmature/Skeleton3D:shoulder.R")
+tracks/18/interp = 1
+tracks/18/loop_wrap = true
+tracks/18/keys = PackedFloat32Array(0, 1, -0.50531465, 0.47724745, 0.50417954, 0.5125378)
+tracks/19/type = "rotation_3d"
+tracks/19/imported = false
+tracks/19/enabled = true
+tracks/19/path = NodePath("RobotArmature/Skeleton3D:upper_arm.R")
+tracks/19/interp = 1
+tracks/19/loop_wrap = true
+tracks/19/keys = PackedFloat32Array(0, 1, 0.019411093, -0.7434065, 0.023822218, 0.6681337)
+tracks/20/type = "rotation_3d"
+tracks/20/imported = false
+tracks/20/enabled = true
+tracks/20/path = NodePath("RobotArmature/Skeleton3D:forearm.R")
+tracks/20/interp = 1
+tracks/20/loop_wrap = true
+tracks/20/keys = PackedFloat32Array(0, 1, -0.017577725, 0.09135095, -0.027113236, 0.9952944)
+tracks/21/type = "rotation_3d"
+tracks/21/imported = false
+tracks/21/enabled = true
+tracks/21/path = NodePath("RobotArmature/Skeleton3D:hand.R")
+tracks/21/interp = 1
+tracks/21/loop_wrap = true
+tracks/21/keys = PackedFloat32Array(0, 1, 0.020934898, -0.017021658, 0.017671376, 0.9994797)
+tracks/22/type = "rotation_3d"
+tracks/22/imported = false
+tracks/22/enabled = true
+tracks/22/path = NodePath("RobotArmature/Skeleton3D:toe.L")
+tracks/22/interp = 1
+tracks/22/loop_wrap = true
+tracks/22/keys = PackedFloat32Array(0, 1, -6.237619e-08, 0.98076427, -0.19519582, 1.8277875e-06)
+tracks/23/type = "rotation_3d"
+tracks/23/imported = false
+tracks/23/enabled = true
+tracks/23/path = NodePath("RobotArmature/Skeleton3D:foot.R")
+tracks/23/interp = 1
+tracks/23/loop_wrap = true
+tracks/23/keys = PackedFloat32Array(0, 1, -0.4928077, -0.0026219054, 0.0052129473, 0.8701187)
+tracks/24/type = "rotation_3d"
+tracks/24/imported = false
+tracks/24/enabled = true
+tracks/24/path = NodePath("RobotArmature/Skeleton3D:toe.R")
+tracks/24/interp = 1
+tracks/24/loop_wrap = true
+tracks/24/keys = PackedFloat32Array(0, 1, 6.3457485e-08, 0.9807643, -0.19519576, -1.8277873e-06)
 
 [sub_resource type="Animation" id="Animation_y12g4"]
 resource_name = "Run-loop"
@@ -4470,6 +4540,184 @@ tracks/30/interp = 1
 tracks/30/loop_wrap = true
 tracks/30/keys = PackedFloat32Array(0, 1, -6.200256e-08, -0.98076427, 0.19519576, 1.82048e-06)
 
+[sub_resource type="Animation" id="Animation_lm846"]
+resource_name = "holdinggun"
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("RobotArmature/Skeleton3D:spine")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0.014909218, 1.1919607e-07, 1.7773131e-09, 0.9998889)
+tracks/1/type = "rotation_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("RobotArmature/Skeleton3D:spine.001")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, 0.029448897, -1.5222805e-14, 7.0211668e-09, 0.9995664)
+tracks/2/type = "rotation_3d"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("RobotArmature/Skeleton3D:spine.002")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = PackedFloat32Array(0, 1, -0.053553484, -2.3807644e-07, -1.7789096e-15, 0.998565)
+tracks/3/type = "rotation_3d"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("RobotArmature/Skeleton3D:spine.003")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = PackedFloat32Array(0, 1, -0.008336097, 1.19205154e-07, 9.937394e-10, 0.99996525)
+tracks/4/type = "rotation_3d"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("RobotArmature/Skeleton3D:spine.004")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = PackedFloat32Array(0, 1, 0.0054002707, -1.1920755e-07, -6.437626e-10, 0.99998546)
+tracks/5/type = "rotation_3d"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("RobotArmature/Skeleton3D:Head")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = PackedFloat32Array(0, 1, 0.008212382, -4.9429143e-14, -1.9579842e-09, 0.99996626)
+tracks/6/type = "rotation_3d"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("RobotArmature/Skeleton3D:HeadTop")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = PackedFloat32Array(0, 1, 0.0039396454, 1.19208366e-07, -4.6964244e-10, 0.99999225)
+tracks/7/type = "rotation_3d"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("RobotArmature/Skeleton3D:Eyes")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = PackedFloat32Array(0, 1, 0.003939636, 1.19208366e-07, -4.696412e-10, 0.99999225)
+tracks/8/type = "rotation_3d"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("RobotArmature/Skeleton3D:Chin")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = PackedFloat32Array(0, 1, 0.003939635, 1.1920835e-07, -4.6964105e-10, 0.99999225)
+tracks/9/type = "rotation_3d"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("RobotArmature/Skeleton3D:shoulder.L")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = PackedFloat32Array(0, 1, -0.50531465, -0.47724745, -0.50417954, 0.5125378)
+tracks/10/type = "rotation_3d"
+tracks/10/imported = false
+tracks/10/enabled = true
+tracks/10/path = NodePath("RobotArmature/Skeleton3D:upper_arm.L")
+tracks/10/interp = 1
+tracks/10/loop_wrap = true
+tracks/10/keys = PackedFloat32Array(0, 1, -0.29569894, 0.6573955, -0.36813626, 0.5872554)
+tracks/11/type = "rotation_3d"
+tracks/11/imported = false
+tracks/11/enabled = true
+tracks/11/path = NodePath("RobotArmature/Skeleton3D:forearm.L")
+tracks/11/interp = 1
+tracks/11/loop_wrap = true
+tracks/11/keys = PackedFloat32Array(0, 1, -0.017577725, -0.09135095, 0.027113236, 0.9952944)
+tracks/12/type = "rotation_3d"
+tracks/12/imported = false
+tracks/12/enabled = true
+tracks/12/path = NodePath("RobotArmature/Skeleton3D:hand.L")
+tracks/12/interp = 1
+tracks/12/loop_wrap = true
+tracks/12/keys = PackedFloat32Array(0, 1, 0.020934898, 0.017021658, -0.017671376, 0.9994797)
+tracks/13/type = "rotation_3d"
+tracks/13/imported = false
+tracks/13/enabled = true
+tracks/13/path = NodePath("RobotArmature/Skeleton3D:shoulder.R")
+tracks/13/interp = 1
+tracks/13/loop_wrap = true
+tracks/13/keys = PackedFloat32Array(0, 1, -0.50531465, 0.47724745, 0.50417954, 0.5125378)
+tracks/14/type = "rotation_3d"
+tracks/14/imported = false
+tracks/14/enabled = true
+tracks/14/path = NodePath("RobotArmature/Skeleton3D:upper_arm.R")
+tracks/14/interp = 2
+tracks/14/loop_wrap = true
+tracks/14/keys = PackedFloat32Array(0, 1, -0.5303877, -0.019136379, -0.00069372926, 0.84753895, 0.46, 1, 0.03442656, 0.029669516, 0.65629834, 0.7531315)
+tracks/15/type = "rotation_3d"
+tracks/15/imported = false
+tracks/15/enabled = true
+tracks/15/path = NodePath("RobotArmature/Skeleton3D:forearm.R")
+tracks/15/interp = 1
+tracks/15/loop_wrap = true
+tracks/15/keys = PackedFloat32Array(0, 1, -0.017577725, 0.09135095, -0.027113236, 0.9952944)
+tracks/16/type = "rotation_3d"
+tracks/16/imported = false
+tracks/16/enabled = true
+tracks/16/path = NodePath("RobotArmature/Skeleton3D:hand.R")
+tracks/16/interp = 1
+tracks/16/loop_wrap = true
+tracks/16/keys = PackedFloat32Array(0, 1, 0.020934898, -0.017021658, 0.017671376, 0.9994797)
+tracks/17/type = "rotation_3d"
+tracks/17/imported = false
+tracks/17/enabled = true
+tracks/17/path = NodePath("RobotArmature/Skeleton3D:thigh.L")
+tracks/17/interp = 1
+tracks/17/loop_wrap = true
+tracks/17/keys = PackedFloat32Array(0, 1, 0.99964744, 0.021063607, -0.005123559, 0.015331446)
+tracks/18/type = "rotation_3d"
+tracks/18/imported = false
+tracks/18/enabled = true
+tracks/18/path = NodePath("RobotArmature/Skeleton3D:shin.L")
+tracks/18/interp = 1
+tracks/18/loop_wrap = true
+tracks/18/keys = PackedFloat32Array(0, 1, -0.00618425, 0.004953393, 0.02698923, 0.99960434)
+tracks/19/type = "rotation_3d"
+tracks/19/imported = false
+tracks/19/enabled = true
+tracks/19/path = NodePath("RobotArmature/Skeleton3D:foot.L")
+tracks/19/interp = 1
+tracks/19/loop_wrap = true
+tracks/19/keys = PackedFloat32Array(0, 1, -0.49280763, 0.0026219038, -0.0052129445, 0.87011874)
+tracks/20/type = "rotation_3d"
+tracks/20/imported = false
+tracks/20/enabled = true
+tracks/20/path = NodePath("RobotArmature/Skeleton3D:toe.L")
+tracks/20/interp = 1
+tracks/20/loop_wrap = true
+tracks/20/keys = PackedFloat32Array(0, 1, -6.237619e-08, 0.98076427, -0.19519582, 1.8277875e-06)
+tracks/21/type = "rotation_3d"
+tracks/21/imported = false
+tracks/21/enabled = true
+tracks/21/path = NodePath("RobotArmature/Skeleton3D:thigh.R")
+tracks/21/interp = 1
+tracks/21/loop_wrap = true
+tracks/21/keys = PackedFloat32Array(0, 1, 0.99964744, -0.021063603, 0.0051235687, 0.015331446)
+tracks/22/type = "rotation_3d"
+tracks/22/imported = false
+tracks/22/enabled = true
+tracks/22/path = NodePath("RobotArmature/Skeleton3D:shin.R")
+tracks/22/interp = 1
+tracks/22/loop_wrap = true
+tracks/22/keys = PackedFloat32Array(0, 1, -0.0061842767, -0.004953379, -0.026989242, 0.99960434)
+tracks/23/type = "rotation_3d"
+tracks/23/imported = false
+tracks/23/enabled = true
+tracks/23/path = NodePath("RobotArmature/Skeleton3D:foot.R")
+tracks/23/interp = 1
+tracks/23/loop_wrap = true
+tracks/23/keys = PackedFloat32Array(0, 1, -0.4928077, -0.0026219054, 0.0052129473, 0.8701187)
+tracks/24/type = "rotation_3d"
+tracks/24/imported = false
+tracks/24/enabled = true
+tracks/24/path = NodePath("RobotArmature/Skeleton3D:toe.R")
+tracks/24/interp = 1
+tracks/24/loop_wrap = true
+tracks/24/keys = PackedFloat32Array(0, 1, 6.3457485e-08, 0.9807643, -0.19519576, -1.8277873e-06)
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_135rq"]
 _data = {
 &"Attack1": SubResource("Animation_tvij7"),
@@ -4492,7 +4740,8 @@ _data = {
 &"Sprint": SubResource("Animation_r0kuy"),
 &"T-pose": SubResource("Animation_83k71"),
 &"WallJump": SubResource("Animation_0qpnv"),
-&"WallSlide": SubResource("Animation_v13o6")
+&"WallSlide": SubResource("Animation_v13o6"),
+&"holdinggun": SubResource("Animation_lm846")
 }
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_wb3a5"]
@@ -4505,16 +4754,16 @@ properties/1/replication_mode = 1
 properties/2/path = NodePath("GodotRobot3D:rotation")
 properties/2/spawn = true
 properties/2/replication_mode = 1
-properties/3/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach/Sword:visible")
+properties/3/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach/Sword:visible")
 properties/3/spawn = true
 properties/3/replication_mode = 2
-properties/4/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach/SwordBig:visible")
+properties/4/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach/SwordBig:visible")
 properties/4/spawn = true
 properties/4/replication_mode = 2
 properties/5/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/BackAttach/Backpack:visible")
 properties/5/spawn = true
 properties/5/replication_mode = 2
-properties/6/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach/Axe:visible")
+properties/6/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach/Axe:visible")
 properties/6/spawn = true
 properties/6/replication_mode = 2
 properties/7/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach/Fedora:visible")
@@ -4538,7 +4787,7 @@ properties/12/replication_mode = 2
 properties/13/path = NodePath("GodotRobot3D/InfrontArea3D:rotation")
 properties/13/spawn = true
 properties/13/replication_mode = 2
-properties/14/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach/WaterGun:visible")
+properties/14/path = NodePath("GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach/WaterGun:visible")
 properties/14/spawn = true
 properties/14/replication_mode = 2
 
@@ -4571,7 +4820,7 @@ _character = NodePath("..")
 animation_player = NodePath("AnimationPlayer")
 
 [node name="FirstPersonCameraSource" type="Node3D" parent="GodotRobot3D" unique_id=1850216777]
-transform = Transform3D(0.5784721, 5.3845817e-15, -1.3791846e-07, 1.0866753e-09, 0.578454, 0.0045578484, 1.3791423e-07, -0.00455786, 0.5784541, 7.771561e-16, 0.996163, 0.017233532)
+transform = Transform3D(0.5784721, 5.4123372e-15, -1.3791846e-07, 1.0866774e-09, 0.578454, 0.004557855, 1.3791423e-07, -0.0045578615, 0.5784541, 8.881784e-16, 0.996163, 0.017233532)
 
 [node name="FirstPersonCameraAnchor" type="Node3D" parent="GodotRobot3D/FirstPersonCameraSource" unique_id=1061916657]
 transform = Transform3D(-1, -4.2919936e-08, 3.9609992e-07, -1.9330494e-07, 0.9215918, -0.38816008, -3.483829e-07, -0.38816008, -0.9215918, -2.6863398e-07, 1.2807279, -0.5394225)
@@ -4594,7 +4843,7 @@ bones/0/parent = -1
 bones/0/rest = Transform3D(1, 8.6597404e-15, 2.3841866e-07, 7.1084703e-09, 0.99955547, -0.029815122, -2.3831262e-07, 0.029815119, 0.9995556, 8.262648e-18, 0.9068298, 0.029855084)
 bones/0/enabled = true
 bones/0/position = Vector3(-3.5255984e-16, 0.86128783, 0.029855084)
-bones/0/rotation = Quaternion(0.014909217, 1.19196066e-07, 1.777313e-09, 0.99988884)
+bones/0/rotation = Quaternion(0.014909219, 1.1919608e-07, 1.7773132e-09, 0.99988896)
 bones/0/scale = Vector3(1, 1, 1.0000001)
 bones/1/name = "spine.001"
 bones/1/parent = 0
@@ -4622,7 +4871,7 @@ bones/4/parent = 3
 bones/4/rest = Transform3D(1, 6.661338e-16, -2.3841852e-07, -2.575012e-09, 0.99994165, -0.010800382, 2.3840462e-07, 0.010800382, 0.99994165, -2.8837438e-16, 0.17607887, -0.01087787)
 bones/4/enabled = true
 bones/4/position = Vector3(-3.6572172e-16, 0.15150139, -0.011741015)
-bones/4/rotation = Quaternion(0.0054002707, -1.1920754e-07, -6.437626e-10, 0.9999854)
+bones/4/rotation = Quaternion(0.005400271, -1.19207556e-07, -6.437626e-10, 0.9999855)
 bones/4/scale = Vector3(1, 0.99999994, 0.99999994)
 bones/5/name = "Head"
 bones/5/parent = 4
@@ -4664,8 +4913,8 @@ bones/10/parent = 9
 bones/10/rest = Transform3D(-0.106441274, 0.06069351, 0.99246496, -0.0029721898, 0.99811137, -0.061357595, -0.99431473, -0.009480772, -0.10605984, 0.009435958, 0.22304296, -8.377851e-05)
 bones/10/enabled = true
 bones/10/position = Vector3(0.009435951, 0.22304288, -8.365756e-05)
-bones/10/rotation = Quaternion(0.019411093, 0.7434065, -0.023822218, 0.6681337)
-bones/10/scale = Vector3(1.0000001, 0.99999994, 1)
+bones/10/rotation = Quaternion(-0.29569897, 0.65739554, -0.3681363, 0.5872555)
+bones/10/scale = Vector3(1.0000001, 0.9999998, 1.0000002)
 bones/11/name = "forearm.L"
 bones/11/parent = 10
 bones/11/rest = Transform3D(0.9818399, -0.050759822, -0.18279535, 0.057182796, 0.9979118, 0.030036377, 0.18088901, -0.03994366, 0.98269194, -1.577885e-07, 0.28038162, -1.090596e-08)
@@ -4693,7 +4942,7 @@ bones/14/rest = Transform3D(-0.106441274, -0.06069351, -0.99246496, 0.0029721898
 bones/14/enabled = true
 bones/14/position = Vector3(-0.009435958, 0.22304296, -8.377851e-05)
 bones/14/rotation = Quaternion(0.019411093, -0.7434065, 0.023822218, 0.6681337)
-bones/14/scale = Vector3(1.0000001, 0.99999994, 1)
+bones/14/scale = Vector3(1.0000005, 0.9999995, 0.99999994)
 bones/15/name = "forearm.R"
 bones/15/parent = 14
 bones/15/rest = Transform3D(0.9818399, 0.050759822, 0.18279535, -0.057182796, 0.9979118, 0.030036377, -0.18088901, -0.03994366, 0.98269194, 1.577885e-07, 0.28038162, -1.090596e-08)
@@ -4785,29 +5034,29 @@ mesh = ExtResource("3_limbs")
 skin = SubResource("Skin_ixatg")
 surface_material_override/0 = SubResource("StandardMaterial3D_xgf8p")
 
-[node name="LeftHandAttach" type="BoneAttachment3D" parent="GodotRobot3D/RobotArmature/Skeleton3D" unique_id=1883396408]
-transform = Transform3D(-0.009290438, 0.9993846, -0.033818543, -0.9989986, -0.0077957786, 0.044063445, 0.04377265, 0.034194008, 0.9984562, 0.99623203, 1.5005425, 0.025426911)
-bone_name = "hand.L"
-bone_idx = 12
+[node name="RightHandAttach" type="BoneAttachment3D" parent="GodotRobot3D/RobotArmature/Skeleton3D" unique_id=1883396408]
+transform = Transform3D(-0.009290457, -0.99938416, 0.03381854, 0.99899894, -0.0077957585, 0.04406351, -0.04377262, 0.034194, 0.9984561, -0.9962319, 1.5005425, 0.02542691)
+bone_name = "hand.R"
+bone_idx = 16
 
-[node name="Sword" parent="GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach" unique_id=1261523624 instance=ExtResource("16_sword")]
+[node name="Sword" parent="GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach" unique_id=1261523624 instance=ExtResource("16_sword")]
 transform = Transform3D(0.60000014, -1.8626451e-09, 2.689194e-08, -1.4086254e-08, 0, -0.5999999, -2.6077032e-08, 0.6, 2.2351742e-08, 0.0015582442, 0.21649343, 0.15789248)
 visible = false
 
-[node name="SwordBig" parent="GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach" unique_id=778398978 instance=ExtResource("17_sword_big")]
+[node name="SwordBig" parent="GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach" unique_id=778398978 instance=ExtResource("17_sword_big")]
 transform = Transform3D(0.55, -7.450581e-09, -2.8405339e-08, 2.6251655e-08, -1.8626451e-09, -0.55, 0, 0.55, 5.5879354e-09, -0.0023369193, 0.21792626, 0.025737152)
 visible = false
 
-[node name="Axe" parent="GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach" unique_id=352347370 instance=ExtResource("28_axe")]
+[node name="Axe" parent="GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach" unique_id=352347370 instance=ExtResource("28_axe")]
 transform = Transform3D(0.75, -1.1175871e-08, 1.0128133e-08, -1.3154931e-08, 0, -0.7499999, -7.450581e-09, 0.7499998, 1.8626451e-09, 0.013932824, 0.23088384, 0.3978039)
 visible = false
 
-[node name="WaterGun" parent="GodotRobot3D/RobotArmature/Skeleton3D/LeftHandAttach" unique_id=352347371 instance=ExtResource("28_watergun")]
-transform = Transform3D(0.04664951, -0.5981753, -0.0031996614, -0.005848879, 0.0027531001, -0.5999652, 0.59815514, 0.04667802, -0.005617032, 0.38788283, -0.673517, 1.016435)
+[node name="WaterGun" parent="GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach" unique_id=352347371 instance=ExtResource("28_watergun")]
+transform = Transform3D(-0.12060307, -0.1226446, 0.57481605, 0.57955074, 0.072883785, 0.13714701, -0.09785861, 0.5827923, 0.1038144, 0.66050786, 1.2937968, -0.15640748)
 visible = false
 
 [node name="BackAttach" type="BoneAttachment3D" parent="GodotRobot3D/RobotArmature/Skeleton3D" unique_id=1338054728]
-transform = Transform3D(1, 7.1054274e-15, -2.3841848e-07, 4.3943658e-09, 0.99983, 0.018431313, 2.38378e-07, -0.018431328, 0.9998302, 8.123062e-17, 1.2942743, 0.05275946)
+transform = Transform3D(1, 7.1054274e-15, -2.3841851e-07, 4.3943693e-09, 0.99983, 0.01843132, 2.3837802e-07, -0.018431328, 0.9998302, -2.2003666e-16, 1.2942743, 0.05275946)
 bone_name = "spine.002"
 bone_idx = 2
 
@@ -4816,7 +5065,7 @@ transform = Transform3D(-1.1, 2.8865799e-15, -1.4210855e-14, -6.661338e-16, 1.10
 visible = false
 
 [node name="HeadAttach" type="BoneAttachment3D" parent="GodotRobot3D/RobotArmature/Skeleton3D" unique_id=1466029568]
-transform = Transform3D(1, 9.325873e-15, -2.3841854e-07, 1.878527e-09, 0.9999688, 0.007879116, 2.384112e-07, -0.007879136, 0.9999689, 1.6014702e-15, 1.7220589, 0.029791467)
+transform = Transform3D(1, 9.325873e-15, -2.3841854e-07, 1.8785304e-09, 0.9999688, 0.007879127, 2.384112e-07, -0.007879138, 0.9999689, 1.689402e-15, 1.7220589, 0.029791467)
 bone_name = "Head"
 bone_idx = 5
 
@@ -4910,3 +5159,5 @@ font = ExtResource("16_xgf8p")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1634180657]
 replication_config = SubResource("SceneReplicationConfig_wb3a5")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=391614270]

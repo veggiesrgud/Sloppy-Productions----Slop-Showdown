@@ -1,6 +1,6 @@
 extends Area3D
 
-@export var droplet_gravity: float = 3.0
+@export var droplet_gravity: float = 0.5
 @export var lifetime: float = 3.0
 
 var speed: float = 25.0
