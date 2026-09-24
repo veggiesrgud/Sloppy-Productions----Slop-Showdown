@@ -11,8 +11,8 @@
 [ext_resource type="PackedScene" uid="uid://bclq8vh1x2goy" path="res://scenes/ui/inventory_ui.tscn" id="11_inv"]
 [ext_resource type="PackedScene" uid="uid://ccencq0lcd3ph" path="res://scenes/ui/multiplayer_chat_ui.tscn" id="12_chat"]
 [ext_resource type="PackedScene" uid="uid://bx7mq8t8hjn7q" path="res://scenes/ui/main_menu_ui.tscn" id="13_menu"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hotbar_ui.tscn" id="17_hotbar"]
 [ext_resource type="Script" uid="uid://6qvd1n5u5d24" path="res://scripts/main_with_inventory.gd" id="16_maininv"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hotbar_ui.tscn" id="17_hotbar"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_fpmwk"]
 font = ExtResource("3_w27de")
@@ -39,7 +39,6 @@ process_mode = 3
 visible = false
 
 [node name="HotbarUI" parent="." unique_id=2001567844 instance=ExtResource("17_hotbar")]
-visible = false
 
 [node name="MultiplayerChatUI" parent="." unique_id=1655363280 instance=ExtResource("12_chat")]
 visible = false
