@@ -5048,8 +5048,7 @@ transform = Transform3D(0.55, -7.450581e-09, -2.8405339e-08, 2.6251655e-08, -1.8
 visible = false
 
 [node name="Axe" parent="GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach" unique_id=352347370 instance=ExtResource("28_axe")]
-transform = Transform3D(0.75, -1.1175871e-08, 1.0128133e-08, -1.3154931e-08, 0, -0.7499999, -7.450581e-09, 0.7499998, 1.8626451e-09, 0.013932824, 0.23088384, 0.3978039)
-visible = false
+transform = Transform3D(0.00984776, 0.749125, -0.03486331, -0.070107326, 0.035633378, 0.745866, 0.7466517, -0.00653461, 0.07049322, 0.28766167, 0.25240874, -0.05085321)
 
 [node name="WaterGun" parent="GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach" unique_id=352347371 instance=ExtResource("28_watergun")]
 transform = Transform3D(-0.12060307, -0.1226446, 0.57481605, 0.57955074, 0.072883785, 0.13714701, -0.09785861, 0.5827923, 0.1038144, 0.66050786, 1.2937968, -0.15640748)
@@ -5101,6 +5100,7 @@ libraries/ = SubResource("AnimationLibrary_135rq")
 
 [node name="SpringArmOffset" type="Node3D" parent="." unique_id=1408823775 node_paths=PackedStringArray("_spring_arm", "_first_person_anchor")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+visible = false
 script = ExtResource("4_ygggd")
 _spring_arm = NodePath("SpringArm3D")
 _first_person_anchor = NodePath("../GodotRobot3D/FirstPersonCameraSource/FirstPersonCameraAnchor")
