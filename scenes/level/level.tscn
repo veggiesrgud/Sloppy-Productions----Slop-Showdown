@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://bx7mq8t8hjn7q" path="res://scenes/ui/main_menu_ui.tscn" id="6_x9g3h"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu_ui.tscn" id="8_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/player_list_ui.tscn" id="9_player_list"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hotbar_ui.tscn" id="10_hotbar"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
 sky_top_color = Color(0.22, 0.46, 0.72, 1)
@@ -79,6 +80,9 @@ visible = false
 anchors_preset = -1
 
 [node name="InventoryUI" parent="." unique_id=2001567843 instance=ExtResource("4_x8g2h")]
+visible = false
+
+[node name="HotbarUI" parent="." unique_id=2001567844 instance=ExtResource("10_hotbar")]
 visible = false
 
 [node name="PlayerListUI" parent="." unique_id=517544055 instance=ExtResource("9_player_list")]

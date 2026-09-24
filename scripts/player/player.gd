@@ -291,8 +291,8 @@ func _apply_gravity(delta: float) -> void:
 
 
 func _equipped_weapon_id() -> String:
-	if player_inventory and player_inventory.equipped_weapon:
-		return str(player_inventory.equipped_weapon.item_id)
+	if player_inventory:
+		return player_inventory.get_held_weapon_id()
 	return ""
 
 
@@ -885,6 +885,19 @@ func request_equip_item(from_slot: int, item_type: Item.ItemType) -> void:
 		return
 	if item_type != Item.ItemType.WEAPON and item_type != Item.ItemType.HAT and item_type != Item.ItemType.BACKPACK:
 		return
+	if item_type == Item.ItemType.WEAPON:
+		# Wield in place - the weapon stays in its slot so hotbar order never
+		# shuffles. Validate the slot really holds a weapon first.
+		var wield_slot := player_inventory.get_slot(from_slot)
+		if wield_slot == null or wield_slot.is_empty():
+			return
+		var wield_item := ItemDatabase.get_item(wield_slot.item_id)
+		if wield_item == null or wield_item.item_type != Item.ItemType.WEAPON:
+			return
+		player_inventory.wielded_weapon_slot = from_slot
+		_sync_inventory_to_owner()
+		_sync_equipment_appearance()
+		return
 	if player_inventory.equip_from_slot(from_slot, item_type):
 		_sync_inventory_to_owner()
 		_sync_equipment_appearance()
@@ -897,6 +910,12 @@ func request_unequip_item(item_type: Item.ItemType, destination_slot: int = -1) 
 	if not player_inventory:
 		return
 	if item_type != Item.ItemType.WEAPON and item_type != Item.ItemType.HAT and item_type != Item.ItemType.BACKPACK:
+		return
+	if item_type == Item.ItemType.WEAPON:
+		# Unwield - the weapon stays where it is, hand just empties.
+		player_inventory.wielded_weapon_slot = -1
+		_sync_inventory_to_owner()
+		_sync_equipment_appearance()
 		return
 	if destination_slot < -1 or destination_slot >= PlayerInventory.MAX_INVENTORY_SIZE:
 		return
@@ -918,7 +937,7 @@ func _sync_equipment_appearance() -> void:
 	# Offline (no peer) counts as server - always apply locally so the gun shows
 	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
 		return
-	var weapon_id := player_inventory.equipped_weapon.item_id
+	var weapon_id := player_inventory.get_held_weapon_id()
 	# Default to water gun so the player is always holding it, even if equip failed
 	if weapon_id.is_empty():
 		weapon_id = WATER_WEAPON_ID
@@ -953,7 +972,7 @@ func request_equipment_appearance() -> void:
 func _sync_equipment_appearance_to_peer(peer_id: int) -> void:
 	if not multiplayer.is_server() or not player_inventory or peer_id <= 0:
 		return
-	var weapon_id := player_inventory.equipped_weapon.item_id
+	var weapon_id := player_inventory.get_held_weapon_id()
 	var hat_id := player_inventory.equipped_hat.item_id
 	var backpack_id := player_inventory.equipped_backpack.item_id
 	sync_equipment_appearance.rpc_id(peer_id, weapon_id, hat_id, backpack_id)
@@ -1125,11 +1144,12 @@ func _add_starting_items():
 		if item:
 			player_inventory.add_item(item, 1)
 
-	# Start with the water gun equipped so LMB shoots water right away
+	# Start with the water gun wielded so LMB shoots water right away.
+	# Wielding leaves it in its slot - nothing moves.
 	for i in player_inventory.slots.size():
 		var slot = player_inventory.slots[i]
 		if slot and slot.item_id == WATER_WEAPON_ID:
-			player_inventory.equip_from_slot(i, Item.ItemType.WEAPON)
+			player_inventory.wielded_weapon_slot = i
 			break
 	_sync_equipment_appearance()
 

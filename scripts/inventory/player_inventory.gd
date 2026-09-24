@@ -8,6 +8,23 @@ var slots: Array[InventorySlot] = []
 var equipped_weapon: InventorySlot = InventorySlot.new()
 var equipped_hat: InventorySlot = InventorySlot.new()
 var equipped_backpack: InventorySlot = InventorySlot.new()
+# Minecraft-style wield: index into slots of the held weapon. Wielding never
+# moves items, so the hotbar order stays fixed no matter how often you switch.
+var wielded_weapon_slot := -1
+
+
+# The weapon actually in hand: the wielded slot's weapon if valid, otherwise
+# the legacy equipped weapon as fallback.
+func get_held_weapon_id() -> String:
+	if wielded_weapon_slot >= 0 and wielded_weapon_slot < slots.size():
+		var slot := slots[wielded_weapon_slot]
+		if slot != null and not slot.is_empty():
+			var item := ItemDatabase.get_item(slot.item_id)
+			if item != null and item.item_type == Item.ItemType.WEAPON:
+				return slot.item_id
+	if equipped_weapon != null:
+		return equipped_weapon.item_id
+	return ""
 
 
 func _init():
@@ -252,7 +269,8 @@ func to_dict() -> Dictionary:
 		"slots": data,
 		"equipped_weapon": equipped_weapon.to_dict(),
 		"equipped_hat": equipped_hat.to_dict(),
-		"equipped_backpack": equipped_backpack.to_dict()
+		"equipped_backpack": equipped_backpack.to_dict(),
+		"wielded_weapon_slot": wielded_weapon_slot
 	}
 
 
@@ -265,3 +283,4 @@ func from_dict(data: Dictionary) -> void:
 	equipped_weapon.from_dict(data.get("equipped_weapon", {}))
 	equipped_hat.from_dict(data.get("equipped_hat", {}))
 	equipped_backpack.from_dict(data.get("equipped_backpack", {}))
+	wielded_weapon_slot = int(data.get("wielded_weapon_slot", -1))

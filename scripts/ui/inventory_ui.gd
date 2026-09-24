@@ -131,7 +131,13 @@ func update_inventory_display():
 			slot_uis[i].set_slot_data(player_inventory.get_slot(i), i)
 		else:
 			slot_uis[i].set_slot_data(null, i)
-	weapon_slot_ui.set_slot_data(player_inventory.equipped_weapon, SLOT_INDEX_WEAPON)
+	var weapon_display: InventorySlot = player_inventory.equipped_weapon
+	var wielded_index: int = player_inventory.wielded_weapon_slot
+	if wielded_index >= 0:
+		var wielded_slot := player_inventory.get_slot(wielded_index)
+		if wielded_slot != null and not wielded_slot.is_empty():
+			weapon_display = wielded_slot
+	weapon_slot_ui.set_slot_data(weapon_display, SLOT_INDEX_WEAPON)
 	hat_slot_ui.set_slot_data(player_inventory.equipped_hat, SLOT_INDEX_HAT)
 	backpack_slot_ui.set_slot_data(player_inventory.equipped_backpack, SLOT_INDEX_BACKPACK)
 	call_deferred("_update_responsive_layout")

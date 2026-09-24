@@ -1,6 +1,7 @@
 extends Node3D
 
 @onready var inventory_ui: InventoryUI = get_node_or_null("InventoryUI")
+@onready var hotbar_ui: HotbarUI = get_node_or_null("HotbarUI")
 @onready var chat_ui: MultiplayerChatUI = get_node_or_null("MultiplayerChatUI")
 @onready var main_menu: MainMenuUI = get_node_or_null("MainMenuUI")
 
@@ -44,6 +45,9 @@ func _setup_player():
 		player.player_inventory = PlayerInventory.new()
 		player._add_starting_items()
 		player.call_deferred("_sync_equipment_appearance")
+	if hotbar_ui:
+		hotbar_ui.set_player(player)
+		hotbar_ui.refresh()
 	# Force first-person FPS view like old slop player
 	var spring = player.get_node_or_null("SpringArmOffset")
 	if spring:
@@ -161,3 +165,5 @@ func _update_mouse():
 func update_local_inventory_display():
 	if inventory_ui:
 		inventory_ui.refresh_display()
+	if hotbar_ui:
+		hotbar_ui.refresh()

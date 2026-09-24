@@ -18,6 +18,7 @@ var _nickname_height_requesters: Dictionary = {}
 @onready var main_menu: MainMenuUI = $MainMenuUI
 @onready var multiplayer_chat: MultiplayerChatUI = $MultiplayerChatUI
 @onready var inventory_ui: InventoryUI = $InventoryUI
+@onready var hotbar_ui: HotbarUI = $HotbarUI
 @onready var player_list_ui: PlayerListUI = $PlayerListUI
 @onready var pause_menu: PauseMenuUI = $PauseMenuUI
 
@@ -100,6 +101,8 @@ func _reset_session_ui() -> void:
 	if inventory_ui:
 		inventory_ui.close_inventory()
 		inventory_ui.current_player = null
+	if hotbar_ui:
+		hotbar_ui.set_player(null)
 	_hide_pause_menu(false)
 	main_menu.show_menu()
 	_update_mouse_mode()
@@ -450,6 +453,9 @@ func _on_pause_quit_pressed() -> void:
 func update_local_inventory_display():
 	if inventory_ui:
 		inventory_ui.refresh_display()
+	if hotbar_ui:
+		hotbar_ui.set_player(_get_local_player())
+		hotbar_ui.refresh()
 
 
 func _get_local_player() -> Character:
