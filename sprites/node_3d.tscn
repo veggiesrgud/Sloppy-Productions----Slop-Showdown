@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://bdmsgyu2swcmh"]
+
+[ext_resource type="ArrayMesh" uid="uid://d7a3hjyhj4il" path="res://assets/characters/player/SLOPPYSLIMYSHOWDOWN.obj" id="1_bk06d"]
+
+[node name="Node3D" type="Node3D" unique_id=9058369]
+
+[node name="Sloppyslimyshowdown" type="MeshInstance3D" parent="." unique_id=821793553]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7115899, -1.1920929e-07, -0.48990917)
+mesh = ExtResource("1_bk06d")

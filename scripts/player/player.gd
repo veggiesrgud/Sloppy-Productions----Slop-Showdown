@@ -44,9 +44,6 @@ const PLAYER_SEPARATION_HEIGHT := 1.5
 const WATER_DAMAGE := 25.0
 const WATER_SPEED := 22.0
 const BACKPACK_NODES_BY_ITEM := {"backpack": "Backpack"}
-# Arm pose copied from the holdinggun clip so the gun stays raised while the
-# legs keep playing the movement animations (one body anim plays at a time,
-# so the clip alone can't do both).
 const HOLD_GUN_ARM_POSES := {
 	&"upper_arm.L": Quaternion(-0.29569894, 0.6573955, -0.36813626, 0.5872554),
 	&"upper_arm.R": Quaternion(0.03442656, 0.029669516, 0.65629834, 0.7531315),
@@ -93,6 +90,18 @@ var _server_pickup_animation_started_msec := -1
 var _last_server_pickup_request_msec := -PICKUP_REQUEST_COOLDOWN_MSEC
 var _pickup_area_camera_yaw_offset := 0.0
 var _equipped_hat_visual_id := ""
+var _SLOPPYSLIMYSHOWDOWN_scale := Vector3.ONE
+var _SLOPPYSLIMYSHOWDOWN_base := Vector3.ONE
+var _SLOPPYSLIMYSHOWDOWN_rest_pos := Vector3.ZERO
+var _SLOPPYSLIMYSHOWDOWN_rock := 0.0
+var _SLOPPYSLIMYSHOWDOWN_hop := 0.0
+var _SLOPPYSLIMYSHOWDOWN_air_time := 0.0
+var _SLOPPYSLIMYSHOWDOWN_squash_time := 0.0
+var _squash_node: Node3D
+var _rig_root: Node3D
+var _rig_skeleton: Skeleton3D
+var _rig_pairs: Array = []
+var _rig_active := false
 
 @onready var nickname: Label3D = $PlayerNick/Nickname
 
@@ -134,6 +143,7 @@ func damage(amount):
 func _ready():
 	add_to_group("player")
 	_ensure_shift_lock_action()
+	_setup_SLOPPYSLIMYSHOWDOWN_rig()
 	# Offline: always create inventory even without server
 	if not multiplayer.has_multiplayer_peer():
 		player_inventory = PlayerInventory.new()
@@ -172,6 +182,8 @@ func _is_local_main_player() -> bool:
 	return str(name) == "Player" or not multiplayer.has_multiplayer_peer() or is_multiplayer_authority()
 
 func _on_camera_perspective_changed(first_person: bool) -> void:
+	if _rig_root:
+		_rig_root.visible = _rig_active and not (first_person and _is_local_main_player())
 	if not _is_local_main_player():
 		return
 	_body.visible = true
@@ -179,6 +191,11 @@ func _on_camera_perspective_changed(first_person: bool) -> void:
 	_chest_mesh.visible = not first_person
 	_face_mesh.visible = not first_person
 	_limbs_head_mesh.visible = true
+	if _rig_active:
+		_bottom_mesh.visible = false
+		_chest_mesh.visible = false
+		_face_mesh.visible = false
+		_limbs_head_mesh.visible = false
 	nickname.visible = not first_person
 	_first_person_hud.visible = first_person
 	for bone_name in FIRST_PERSON_HIDDEN_BONES:
@@ -190,6 +207,103 @@ func _on_camera_perspective_changed(first_person: bool) -> void:
 	else:
 		_pickup_area.rotation = Vector3.ZERO
 		call_deferred("_refresh_nickname_height_after_perspective_change")
+
+
+func _setup_SLOPPYSLIMYSHOWDOWN_rig() -> void:
+	_rig_skeleton = _find_rig_skeleton()
+	if _rig_skeleton == null:
+		_rig_root = null
+		return
+	_rig_pairs.clear()
+	for i in range(_skeleton.get_bone_count()):
+		var bone_name := _skeleton.get_bone_name(i)
+		var rig_idx := _rig_skeleton.find_bone(bone_name)
+		if rig_idx >= 0:
+			_rig_pairs.append([i, rig_idx])
+	if _rig_pairs.size() < 20:
+		_rig_skeleton = null
+		_rig_pairs.clear()
+		_rig_root = null
+		return
+	_rig_active = true
+	_squash_node = _rig_root
+	_SLOPPYSLIMYSHOWDOWN_base = _rig_root.scale
+	_SLOPPYSLIMYSHOWDOWN_rest_pos = _rig_root.position
+	_SLOPPYSLIMYSHOWDOWN_scale = _SLOPPYSLIMYSHOWDOWN_base
+	if not _skeleton.skeleton_updated.is_connected(_on_skeleton_updated):
+		_skeleton.skeleton_updated.connect(_on_skeleton_updated)
+	_sync_baked_skeleton()
+
+
+func _find_rig_skeleton() -> Skeleton3D:
+	_rig_root = get_node_or_null("GodotRobot3D/RobotArmature/SLOPPYSLIMYSHOWDOWN") as Node3D
+	if _rig_root == null or _skeleton == null:
+		return null
+	var found := _rig_root.find_children("*", "Skeleton3D", true, false)
+	if found.is_empty():
+		return null
+	return found[0] as Skeleton3D
+
+
+func _sync_baked_skeleton() -> void:
+	if not _rig_active or _rig_skeleton == null or _skeleton == null:
+		return
+	for pair in _rig_pairs:
+		var live_idx: int = pair[0]
+		var rig_idx: int = pair[1]
+		_rig_skeleton.set_bone_global_pose(rig_idx, _skeleton.get_bone_global_pose(live_idx))
+
+
+func _on_skeleton_updated() -> void:
+	_sync_baked_skeleton()
+
+
+func _update_SLOPPYSLIMYSHOWDOWN_squash() -> void:
+	if _squash_node == null:
+		return
+	_SLOPPYSLIMYSHOWDOWN_squash_time = maxf(0.0, _SLOPPYSLIMYSHOWDOWN_squash_time - get_process_delta_time())
+	var state: StringName = _body._current_state if _body else &"Idle"
+	var time_seconds := Time.get_ticks_msec() / 1000.0
+	var squash := Vector3.ONE
+	var rock := 0.0
+	var hop := 0.0
+	if state == &"Jump" or state == &"Jump2":
+		squash = Vector3(0.9, 1.15, 0.9)
+	elif state == &"Fall":
+		squash = Vector3(0.95, 1.08, 0.95)
+	elif state == &"Run":
+		var bounce := absf(sin(time_seconds * 9.0))
+		squash = Vector3(1.0 + 0.07 * bounce, 1.0 - 0.08 * bounce, 1.0 + 0.07 * bounce)
+		rock = sin(time_seconds * 9.0) * 0.09
+		hop = bounce * 0.07
+	elif state == &"Sprint":
+		var sprint_bounce := absf(sin(time_seconds * 12.0))
+		squash = Vector3(1.0 + 0.09 * sprint_bounce, 1.0 - 0.1 * sprint_bounce, 1.0 + 0.09 * sprint_bounce)
+		rock = sin(time_seconds * 12.0) * 0.12
+		hop = sprint_bounce * 0.1
+	elif state == &"Emote2":
+		squash = Vector3(1.1, 0.85, 1.1)
+	else:
+		var breath := sin(time_seconds * 2.0)
+		squash = Vector3(1.0 - 0.012 * breath, 1.0 + 0.02 * breath, 1.0 - 0.012 * breath)
+	if _SLOPPYSLIMYSHOWDOWN_squash_time > 0.0:
+		squash = Vector3(1.18, 0.75, 1.18)
+		rock = 0.0
+		hop = 0.0
+	var target := Vector3(
+		_SLOPPYSLIMYSHOWDOWN_base.x * squash.x, _SLOPPYSLIMYSHOWDOWN_base.y * squash.y, _SLOPPYSLIMYSHOWDOWN_base.z * squash.z
+	)
+	var blend := clampf(get_process_delta_time() * 10.0, 0.0, 1.0)
+	_SLOPPYSLIMYSHOWDOWN_scale = _SLOPPYSLIMYSHOWDOWN_scale.lerp(target, blend)
+	_squash_node.scale = _SLOPPYSLIMYSHOWDOWN_scale
+	_SLOPPYSLIMYSHOWDOWN_rock = lerpf(_SLOPPYSLIMYSHOWDOWN_rock, rock, blend)
+	_SLOPPYSLIMYSHOWDOWN_hop = lerpf(_SLOPPYSLIMYSHOWDOWN_hop, hop, blend)
+	_squash_node.rotation = Vector3(0.0, 0.0, _SLOPPYSLIMYSHOWDOWN_rock)
+	_squash_node.position = Vector3(
+		_SLOPPYSLIMYSHOWDOWN_rest_pos.x * (_SLOPPYSLIMYSHOWDOWN_scale.x / _SLOPPYSLIMYSHOWDOWN_base.x),
+		_SLOPPYSLIMYSHOWDOWN_rest_pos.y * (_SLOPPYSLIMYSHOWDOWN_scale.y / _SLOPPYSLIMYSHOWDOWN_base.y) + _SLOPPYSLIMYSHOWDOWN_hop,
+		_SLOPPYSLIMYSHOWDOWN_rest_pos.z * (_SLOPPYSLIMYSHOWDOWN_scale.z / _SLOPPYSLIMYSHOWDOWN_base.z)
+	)
 
 
 func _refresh_nickname_height_after_perspective_change() -> void:
@@ -215,6 +329,13 @@ func _physics_process(delta):
 		return
 	if not multiplayer.has_multiplayer_peer() and not is_inside_tree():
 		return
+
+	if is_on_floor():
+		if _SLOPPYSLIMYSHOWDOWN_air_time > 0.25:
+			_SLOPPYSLIMYSHOWDOWN_squash_time = 0.22
+		_SLOPPYSLIMYSHOWDOWN_air_time = 0.0
+	else:
+		_SLOPPYSLIMYSHOWDOWN_air_time += delta
 
 	var current_scene = get_tree().get_current_scene()
 	var should_freeze = false
@@ -278,8 +399,6 @@ func _physics_process(delta):
 		_push_collided_items()
 	_separate_from_players()
 
-	# Body always follows movement - attacks only tween the held weapon,
-	# so there is no full-body swing anim to protect here.
 	_request_animation(_get_body_animation())
 
 
@@ -296,8 +415,6 @@ func _equipped_weapon_id() -> String:
 	return ""
 
 
-# Arms are posed by the hold-gun bone override (see HOLD_GUN_ARM_POSES), so
-# the body animation is always plain movement - legs included.
 func _get_body_animation() -> StringName:
 	var anim: StringName = _body.get_movement_animation(velocity)
 	return anim
@@ -305,15 +422,12 @@ func _get_body_animation() -> StringName:
 func _start_attack() -> void:
 	if is_attacking or is_collecting:
 		return
-	# No full-body Attack1 spin - water gun just shoots, melee just swings the
-	# held weapon while the body keeps its movement animation.
 	if _equipped_weapon_id() == WATER_WEAPON_ID:
 		_shoot_water_gun()
 		_kick_held_weapon()
 	else:
 		is_attacking = true
 		_swing_held_weapon()
-		# Land melee damage mid-swing, then allow the next swing
 		await get_tree().create_timer(0.12).timeout
 		_perform_melee_attack()
 		await get_tree().create_timer(0.13).timeout
@@ -344,8 +458,6 @@ func _perform_melee_attack() -> void:
 		_play_melee_hit(node as Node3D)
 
 
-# Hit feedback when a sword swing connects: impact burst on the enemy,
-# a quick scale punch, and a small knockback shove.
 func _play_melee_hit(target: Node3D) -> void:
 	var impact := MELEE_IMPACT_SCENE.instantiate() as Node3D
 	var world := get_tree().current_scene
@@ -377,9 +489,11 @@ func _shoot_water_gun() -> void:
 		return
 	var dir := -cam.global_transform.basis.z.normalized()
 	var muzzle := _get_water_gun_muzzle(dir)
-	# Converge on the crosshair: raycast from the camera to find what is aimed
-	# at, then fire from the muzzle toward that point. Fixes the offset where
-	# parallel shots from the gun visibly missed the crosshair.
+	var shot_dir := _aim_at_crosshair(cam, dir, muzzle)
+	_spawn_droplet(muzzle, shot_dir)
+
+
+func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	var aim_point := cam.global_position + dir * 60.0
 	var space := get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(cam.global_position, aim_point)
@@ -387,10 +501,13 @@ func _shoot_water_gun() -> void:
 	var hit := space.intersect_ray(query)
 	if not hit.is_empty():
 		aim_point = hit["position"]
-	var shot_dir := dir
 	var to_aim := aim_point - muzzle
 	if to_aim.length() > 0.05:
-		shot_dir = to_aim.normalized()
+		return to_aim.normalized()
+	return dir
+
+
+func _spawn_droplet(muzzle: Vector3, shot_dir: Vector3) -> void:
 	var droplet = DROPLET_SCENE.instantiate()
 	if droplet.has_method("setup"):
 		droplet.setup(shot_dir, WATER_SPEED, WATER_DAMAGE)
@@ -401,9 +518,6 @@ func _shoot_water_gun() -> void:
 		world.add_child(droplet)
 	else:
 		get_tree().root.add_child(droplet)
-	# Spawn from the gun's visible mesh (not the camera), so droplets come
-	# out of the actual gun. Falls back to the old camera offset if the
-	# mesh can't be found for any reason.
 	droplet.global_position = muzzle
 	droplet.look_at(droplet.global_position + shot_dir, Vector3.UP)
 	var audio = get_node_or_null("/root/Audio")
@@ -411,9 +525,6 @@ func _shoot_water_gun() -> void:
 		audio.play("sounds/blaster.ogg")
 
 
-# World position at the surface of the held water gun's mesh, pushed slightly
-# along the shot direction. Uses the rendered mesh bounds, so it stays correct
-# no matter where the gun node's origin sits.
 func _get_water_gun_muzzle(dir: Vector3) -> Vector3:
 	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
 	var fallback := global_position + Vector3(0, 1.4, 0) + dir * 0.8
@@ -433,7 +544,6 @@ func _get_water_gun_muzzle(dir: Vector3) -> Vector3:
 	return bounds.get_center() + dir * (bounds.size.length() * 0.25 + 0.05)
 
 
-# Quick gun kick so shooting has feedback without touching the body animation.
 func _kick_held_weapon() -> void:
 	var weapon_id := _equipped_weapon_id()
 	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "WaterGun"))
@@ -446,9 +556,6 @@ func _kick_held_weapon() -> void:
 	kick.tween_property(weapon, "position", rest_position, 0.1)
 
 
-# Quick weapon swing (rotate the held weapon and back) - melee feedback only.
-# Note: tweens the weapon node itself, not the BoneAttachment (the bone
-# overwrites the attachment transform every frame).
 func _swing_held_weapon() -> void:
 	var weapon_id := _equipped_weapon_id()
 	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "Sword"))
@@ -464,9 +571,6 @@ func _swing_held_weapon() -> void:
 func _request_animation(state: StringName, restart: bool = false) -> void:
 	if not ALLOWED_ANIMATION_STATES.has(state):
 		return
-	# If a pickup anim is interrupted its finish signal never fires -
-	# clear the flag here or the pose freezes forever.
-	# (is_attacking is timer-based now, not tied to the body animation.)
 	if state != &"Emote2" and is_collecting:
 		is_collecting = false
 	if not restart and _last_requested_animation == state:
@@ -538,6 +642,7 @@ func sync_animation_state(state: StringName, sequence: int) -> void:
 	if is_multiplayer_authority():
 		return
 	_body.play_animation_state(state, true)
+	_update_SLOPPYSLIMYSHOWDOWN_squash()
 
 
 func _push_collided_items() -> void:
@@ -547,26 +652,26 @@ func _push_collided_items() -> void:
 			apply_force_to_server_object.rpc_id(1, c.get_collider().name, -c.get_normal())
 
 
-# Soft body-block between players so robots can't walk inside each other.
-# Physics already collides (mask includes the player layer), but network-synced
-# puppets can still visually overlap - each authority pushes its own body out.
 func _separate_from_players() -> void:
 	for node in get_tree().get_nodes_in_group("player"):
-		if node == self or not (node is Node3D):
+		if node == self:
 			continue
-		var other := node as Node3D
-		var delta := global_position - other.global_position
-		# Ignore players on another level (one above the other on platforms)
-		if absf(delta.y) > PLAYER_SEPARATION_HEIGHT:
-			continue
-		delta.y = 0.0
-		var distance := delta.length()
-		if distance >= PLAYER_SEPARATION_DISTANCE:
-			continue
-		if distance < 0.001:
-			delta = Vector3.RIGHT
-			distance = 0.001
-		global_position += (delta / distance) * (PLAYER_SEPARATION_DISTANCE - distance)
+		if node is Node3D:
+			_push_away_from(node)
+
+
+func _push_away_from(other: Node3D) -> void:
+	var delta := global_position - other.global_position
+	if absf(delta.y) > PLAYER_SEPARATION_HEIGHT:
+		return
+	delta.y = 0.0
+	var distance := delta.length()
+	if distance >= PLAYER_SEPARATION_DISTANCE:
+		return
+	if distance < 0.001:
+		delta = Vector3.RIGHT
+		distance = 0.001
+	global_position += (delta / distance) * (PLAYER_SEPARATION_DISTANCE - distance)
 
 
 func _process(_delta):
@@ -590,6 +695,7 @@ func _process(_delta):
 		first_person and not camera_input_blocked and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	)
 	_check_out_of_bounds()
+	_update_SLOPPYSLIMYSHOWDOWN_squash()
 
 
 func _freeze():
@@ -633,9 +739,6 @@ func _is_running() -> bool:
 	return false
 
 
-# Shift lock (Roblox-style): body stays glued to the camera facing direction
-# instead of turning toward the movement direction. Movement stays
-# camera-relative, so A/D strafe while facing forward.
 func _face_camera() -> void:
 	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
 	if cam == null:
@@ -648,7 +751,6 @@ func _face_camera() -> void:
 	_body.rotation.y = lerp_angle(_body.rotation.y, atan2(forward.x, forward.z), 0.5)
 
 
-# Created in code (not project.godot) so OneDrive syncs can't wipe the binding.
 func _ensure_shift_lock_action() -> void:
 	if InputMap.has_action("shift_lock"):
 		return
@@ -886,8 +988,6 @@ func request_equip_item(from_slot: int, item_type: Item.ItemType) -> void:
 	if item_type != Item.ItemType.WEAPON and item_type != Item.ItemType.HAT and item_type != Item.ItemType.BACKPACK:
 		return
 	if item_type == Item.ItemType.WEAPON:
-		# Wield in place - the weapon stays in its slot so hotbar order never
-		# shuffles. Validate the slot really holds a weapon first.
 		var wield_slot := player_inventory.get_slot(from_slot)
 		if wield_slot == null or wield_slot.is_empty():
 			return
@@ -912,7 +1012,6 @@ func request_unequip_item(item_type: Item.ItemType, destination_slot: int = -1) 
 	if item_type != Item.ItemType.WEAPON and item_type != Item.ItemType.HAT and item_type != Item.ItemType.BACKPACK:
 		return
 	if item_type == Item.ItemType.WEAPON:
-		# Unwield - the weapon stays where it is, hand just empties.
 		player_inventory.wielded_weapon_slot = -1
 		_sync_inventory_to_owner()
 		_sync_equipment_appearance()
@@ -934,11 +1033,9 @@ func _is_owner_request() -> bool:
 func _sync_equipment_appearance() -> void:
 	if not player_inventory:
 		return
-	# Offline (no peer) counts as server - always apply locally so the gun shows
 	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
 		return
 	var weapon_id := player_inventory.get_held_weapon_id()
-	# Default to water gun so the player is always holding it, even if equip failed
 	if weapon_id.is_empty():
 		weapon_id = WATER_WEAPON_ID
 	var hat_id := player_inventory.equipped_hat.item_id
@@ -988,14 +1085,11 @@ func sync_equipment_appearance(weapon_id: String, hat_id: String, backpack_id: S
 
 func _set_equipment_visibility(weapon_id: String, hat_id: String, backpack_id: String) -> void:
 	_equipped_hat_visual_id = hat_id
-	# Guarantee the water gun is held by default - fixes invisible/empty hand
 	if weapon_id.is_empty():
 		weapon_id = WATER_WEAPON_ID
 	_set_equipment_nodes_visibility(HEAD_EQUIPMENT_PATH, HAT_NODES_BY_ITEM, hat_id)
 	_set_equipment_nodes_visibility(HAND_EQUIPMENT_PATH, WEAPON_NODES_BY_ITEM, weapon_id)
 	_set_equipment_nodes_visibility(BACK_EQUIPMENT_PATH, BACKPACK_NODES_BY_ITEM, backpack_id)
-	# Safety net: force WaterGun visible when it should be equipped
-	# (covers case where dictionary/node name drifted but inventory is correct)
 	if weapon_id == WATER_WEAPON_ID:
 		var water_gun := get_node_or_null(HAND_EQUIPMENT_PATH + "WaterGun") as Node3D
 		if water_gun:
@@ -1003,30 +1097,29 @@ func _set_equipment_visibility(weapon_id: String, hat_id: String, backpack_id: S
 	_apply_hold_gun_pose(weapon_id == WATER_WEAPON_ID)
 
 
-# Locks the arms into the holdinggun pose via persistent bone overrides while
-# the water gun is equipped. Overrides blend over whatever the AnimationPlayer
-# is doing, so legs/spine keep playing Idle/Run/Jump underneath. Cleared when
-# another weapon (or nothing) is equipped.
 func _apply_hold_gun_pose(enabled: bool) -> void:
 	if _skeleton == null:
+		return
+	if not enabled:
+		_skeleton.clear_bones_global_pose_override()
 		return
 	for bone_name in HOLD_GUN_ARM_POSES:
 		var bone_idx := _skeleton.find_bone(bone_name)
 		if bone_idx < 0:
 			continue
-		if not enabled:
-			_skeleton.clear_bones_global_pose_override()
-			return
-		var parent_idx := _skeleton.get_bone_parent(bone_idx)
-		var parent_global := Transform3D.IDENTITY
-		if parent_idx >= 0:
-			parent_global = _skeleton.get_bone_global_rest(parent_idx)
-		var rest_local: Transform3D = _skeleton.get_bone_rest(bone_idx)
-		var hold_quat: Quaternion = HOLD_GUN_ARM_POSES[bone_name]
-		var target_basis := Basis(hold_quat).scaled(rest_local.basis.get_scale())
-		_skeleton.set_bone_global_pose_override(
-			bone_idx, parent_global * Transform3D(target_basis, rest_local.origin), 1.0, true
-		)
+		_skeleton.set_bone_global_pose_override(bone_idx, _hold_gun_target(bone_idx), 1.0, true)
+
+
+func _hold_gun_target(bone_idx: int) -> Transform3D:
+	var bone_name := _skeleton.get_bone_name(bone_idx)
+	var parent_global := Transform3D.IDENTITY
+	var parent_idx := _skeleton.get_bone_parent(bone_idx)
+	if parent_idx >= 0:
+		parent_global = _skeleton.get_bone_global_rest(parent_idx)
+	var rest_local: Transform3D = _skeleton.get_bone_rest(bone_idx)
+	var hold_quat: Quaternion = HOLD_GUN_ARM_POSES[bone_name]
+	var target_basis := Basis(hold_quat).scaled(rest_local.basis.get_scale())
+	return parent_global * Transform3D(target_basis, rest_local.origin)
 
 
 func _broadcast_nickname_height(height: float) -> void:
@@ -1144,8 +1237,6 @@ func _add_starting_items():
 		if item:
 			player_inventory.add_item(item, 1)
 
-	# Start with the water gun wielded so LMB shoots water right away.
-	# Wielding leaves it in its slot - nothing moves.
 	for i in player_inventory.slots.size():
 		var slot = player_inventory.slots[i]
 		if slot and slot.item_id == WATER_WEAPON_ID:

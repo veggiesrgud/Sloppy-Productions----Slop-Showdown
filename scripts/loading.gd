@@ -21,7 +21,6 @@ func _ready():
 		logo.texture = load("res://splash-screen.png")
 	if logo_shadow and logo.texture:
 		logo_shadow.texture = logo.texture
-	# Shrink the fixed-size center panel on narrow/short screens so it never overflows
 	get_viewport().size_changed.connect(_fit_center_panel)
 	_fit_center_panel()
 	# Ensure we stay full 5 seconds - no early skip
@@ -32,11 +31,17 @@ func _fit_center_panel() -> void:
 	if not center_panel:
 		return
 	var viewport_size := get_viewport().get_visible_rect().size
-	# Panel is 640x400 with 60px side margins and ~140px vertical room for bar/hint
-	var scale_factor := minf(1.0, minf((viewport_size.x - 32.0) / 640.0, (viewport_size.y - 140.0) / 400.0))
-	scale_factor = clampf(scale_factor, 0.3, 1.0)
+	var fit_w := (viewport_size.x - 32.0) / 640.0
+	var fit_h := (viewport_size.y - 140.0) / 400.0
+	var scale_factor := fit_w
+	if fit_h < scale_factor:
+		scale_factor = fit_h
+	if scale_factor > 1.0:
+		scale_factor = 1.0
+	elif scale_factor < 0.3:
+		scale_factor = 0.3
 	center_panel.pivot_offset = center_panel.size * 0.5
-	center_panel.scale = Vector2.ONE * scale_factor
+	center_panel.scale = Vector2(scale_factor, scale_factor)
 
 func _process(delta):
 	time_left = max(0, time_left - delta)
