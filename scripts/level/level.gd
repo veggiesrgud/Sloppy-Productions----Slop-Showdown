@@ -13,6 +13,7 @@ var player_list_visible := false
 var _player_nickname_heights: Dictionary = {}
 var _nickname_heights_requested := false
 var _nickname_height_requesters: Dictionary = {}
+var _last_local_health := 100
 
 @onready var players_container: Node3D = $PlayersContainer
 @onready var main_menu: MainMenuUI = $MainMenuUI
@@ -36,6 +37,9 @@ func _ready():
 	main_menu.host_pressed.connect(_on_host_pressed)
 	main_menu.join_pressed.connect(_on_join_pressed)
 	main_menu.quit_pressed.connect(_on_quit_pressed)
+	main_menu.refresh_servers_pressed.connect(_on_refresh_servers_pressed)
+	main_menu.add_server_pressed.connect(_on_add_server_pressed)
+	main_menu.remove_server_pressed.connect(_on_remove_server_pressed)
 	pause_menu.resume_pressed.connect(_on_pause_resume_pressed)
 	pause_menu.main_menu_pressed.connect(_on_pause_main_menu_pressed)
 	pause_menu.quit_pressed.connect(_on_pause_quit_pressed)
@@ -48,7 +52,10 @@ func _ready():
 
 	Network.server_disconnected.connect(_on_server_disconnected)
 	Network.connect("player_connected", Callable(self, "_on_player_connected"))
+	Network.connect("lan_servers_changed", Callable(self, "_on_lan_servers_changed"))
 	multiplayer.peer_disconnected.connect(_remove_player)
+	Network.start_lan_discovery()
+	_refresh_server_list()
 	_update_mouse_mode()
 
 
@@ -64,16 +71,22 @@ func _process(_delta: float) -> void:
 
 
 func after_ready():
-	var ip_address: String
+	var ip_address: String = Network.SERVER_ADDRESS
 	if OS.has_feature("windows"):
 		if OS.has_environment("COMPUTERNAME"):
-			ip_address = IP.resolve_hostname(str(OS.get_environment("COMPUTERNAME")), IP.TYPE_IPV4)
+			var resolved := IP.resolve_hostname(str(OS.get_environment("COMPUTERNAME")), IP.TYPE_IPV4)
+			if not resolved.is_empty():
+				ip_address = resolved
 	elif OS.has_feature("x11"):
 		if OS.has_environment("HOSTNAME"):
-			ip_address = IP.resolve_hostname(str(OS.get_environment("HOSTNAME")), IP.TYPE_IPV4)
+			var resolved := IP.resolve_hostname(str(OS.get_environment("HOSTNAME")), IP.TYPE_IPV4)
+			if not resolved.is_empty():
+				ip_address = resolved
 	elif OS.has_feature("OSX"):
 		if OS.has_environment("HOSTNAME"):
-			ip_address = IP.resolve_hostname(str(OS.get_environment("HOSTNAME")), IP.TYPE_IPV4)
+			var resolved := IP.resolve_hostname(str(OS.get_environment("HOSTNAME")), IP.TYPE_IPV4)
+			if not resolved.is_empty():
+				ip_address = resolved
 	main_menu.address_input.text = ip_address
 
 
@@ -105,6 +118,10 @@ func _reset_session_ui() -> void:
 		hotbar_ui.set_player(null)
 	_hide_pause_menu(false)
 	main_menu.show_menu()
+	Network.start_lan_discovery()
+	_refresh_server_list()
+	_last_local_health = 100
+	_update_health_hud(100)
 	_update_mouse_mode()
 
 
@@ -128,6 +145,7 @@ func _on_host_pressed(nickname: String, skin: String):
 		main_menu.show_menu()
 		_update_mouse_mode()
 		return
+	Network.stop_lan_discovery()
 	main_menu.hide_menu()
 	_update_mouse_mode()
 
@@ -139,8 +157,54 @@ func _on_join_pressed(nickname: String, skin: String, address: String):
 		main_menu.show_menu()
 		_update_mouse_mode()
 		return
+	Network.stop_lan_discovery()
 	main_menu.hide_menu()
 	_update_mouse_mode()
+
+
+func _on_refresh_servers_pressed() -> void:
+	Network.refresh_lan_discovery()
+	_refresh_server_list()
+
+
+func _on_add_server_pressed(address: String) -> void:
+	Network.save_server(address, address)
+	_refresh_server_list()
+
+
+func _on_remove_server_pressed(address: String) -> void:
+	if address.is_empty():
+		return
+	Network.remove_server(address)
+	_refresh_server_list()
+
+
+func _on_lan_servers_changed(_servers: Array) -> void:
+	_refresh_server_list()
+
+
+func _refresh_server_list() -> void:
+	if main_menu and main_menu.has_method("set_server_list"):
+		main_menu.set_server_list(Network.get_server_list())
+
+
+func _on_local_health_updated(health) -> void:
+	_update_health_hud(health)
+
+
+func _update_health_hud(health) -> void:
+	var label := get_node_or_null("HUD/Health") as Label
+	if label:
+		label.text = str(maxi(int(health), 0)) + "%"
+	if int(health) >= _last_local_health:
+		_last_local_health = int(health)
+		return
+	_last_local_health = int(health)
+	var flash := get_node_or_null("HUD/HitFlash") as ColorRect
+	if flash:
+		flash.modulate.a = 0.45
+		var tween := create_tween()
+		tween.tween_property(flash, "modulate:a", 0.0, 0.35)
 
 
 func _add_player(id: int, player_info: Dictionary) -> Character:
@@ -154,12 +218,18 @@ func _add_player(id: int, player_info: Dictionary) -> Character:
 	player.name = str(id)
 	player.position = get_spawn_point(id)
 	players_container.add_child(player, true)
+	player.set("_spawn_point", player.global_position)
 
 	var nick = Network.sanitize_nickname(str(player_info.get("nick", "")), "Player_" + str(id))
 	player.nickname.text = nick
 
 	var skin_enum = Network.sanitize_skin_value(player_info.get("skin", Character.SkinColor.BLUE))
 	player.set_player_skin(skin_enum)
+	if id == multiplayer.get_unique_id():
+		if not player.health_updated.is_connected(_on_local_health_updated):
+			player.health_updated.connect(_on_local_health_updated)
+		_last_local_health = player.health
+		call_deferred("_update_health_hud", player.health)
 	_apply_player_nickname_height(id)
 	return player
 
@@ -167,7 +237,7 @@ func _add_player(id: int, player_info: Dictionary) -> Character:
 func get_spawn_point(id: int) -> Vector3:
 	var spawn_angle := fmod(float(id) * 2.399963229728653, 2.0 * PI)
 	var spawn_point := Vector2.from_angle(spawn_angle) * 10
-	return Vector3(spawn_point.x, 0, spawn_point.y)
+	return Vector3(spawn_point.x, 1.0, spawn_point.y)
 
 
 func _remove_player(id):

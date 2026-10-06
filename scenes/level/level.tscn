@@ -56,6 +56,7 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2542782, 0)
 
 [node name="Arena" parent="Environment" unique_id=318485284 instance=ExtResource("2_arena")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.023453236, 0, -0.012812376)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=824936187]
 environment = SubResource("Environment_qb4jd")
@@ -83,10 +84,37 @@ anchors_preset = -1
 visible = false
 
 [node name="HotbarUI" parent="." unique_id=2001567844 instance=ExtResource("10_hotbar")]
-visible = false
 
 [node name="PlayerListUI" parent="." unique_id=517544055 instance=ExtResource("9_player_list")]
 visible = false
 
 [node name="PauseMenuUI" parent="." unique_id=358154633 instance=ExtResource("8_pause")]
 visible = false
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1800000001]
+layer = 5
+
+[node name="HitFlash" type="ColorRect" parent="HUD" unique_id=1800000002]
+modulate = Color(1, 1, 1, 0)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.9, 0.1, 0.1, 1)
+
+[node name="Health" type="Label" parent="HUD" unique_id=1800000003]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -72.0
+offset_right = 220.0
+offset_bottom = -16.0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.9, 0.15, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.9)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 40
+text = "100%"

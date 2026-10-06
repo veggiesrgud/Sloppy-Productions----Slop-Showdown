@@ -11,9 +11,8 @@ var _current_state: StringName = &""
 
 
 func apply_rotation(_velocity: Vector3) -> void:
-	# Player root is rotated PI, so face travel dir with +Z convention (fixes moonwalking)
-	var new_rotation_y = lerp_angle(rotation.y, atan2(_velocity.x, _velocity.z), LERP_VELOCITY)
-	rotation.y = new_rotation_y
+	var target_yaw := atan2(_velocity.x, _velocity.z)
+	global_rotation.y = lerp_angle(global_rotation.y, target_yaw, LERP_VELOCITY)
 
 
 func get_movement_animation(_velocity: Vector3) -> StringName:

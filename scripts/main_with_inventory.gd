@@ -1,12 +1,9 @@
 extends Node3D
-
 @onready var inventory_ui: InventoryUI = get_node_or_null("InventoryUI")
 @onready var hotbar_ui: HotbarUI = get_node_or_null("HotbarUI")
 @onready var chat_ui: MultiplayerChatUI = get_node_or_null("MultiplayerChatUI")
 @onready var main_menu: MainMenuUI = get_node_or_null("MainMenuUI")
-
 var inventory_visible := false
-
 func _ready():
 	if inventory_ui:
 		inventory_ui.close_inventory()
@@ -14,7 +11,6 @@ func _ready():
 	var chat = get_node_or_null("MultiplayerChatUI")
 	if chat and chat.has_method("close_chat"):
 		chat.close_chat()
-	# Show main menu right after loading (Host / Join / Quit)
 	if main_menu:
 		main_menu.show_menu()
 		if not main_menu.host_pressed.is_connected(_on_host_pressed):
@@ -23,20 +19,55 @@ func _ready():
 			main_menu.join_pressed.connect(_on_join_pressed)
 		if not main_menu.quit_pressed.is_connected(_on_quit_pressed):
 			main_menu.quit_pressed.connect(_on_quit_pressed)
+		if not main_menu.refresh_servers_pressed.is_connected(_on_refresh_servers):
+			main_menu.refresh_servers_pressed.connect(_on_refresh_servers)
+		if not main_menu.add_server_pressed.is_connected(_on_add_server):
+			main_menu.add_server_pressed.connect(_on_add_server)
+		if not main_menu.remove_server_pressed.is_connected(_on_remove_server):
+			main_menu.remove_server_pressed.connect(_on_remove_server)
 		_prefill_address()
-	# Freeze the whole world (enemies, timers, droplets, player) until Host/Join
+		_wire_server_browser()
 	get_tree().paused = true
 	_update_mouse()
-	# Ensure player has inventory even offline
 	call_deferred("_setup_player")
-
 func _prefill_address():
 	if main_menu == null:
 		return
 	var addr = main_menu.get_node_or_null("MainContainer/MainMenu/Option3/AddressInput") as LineEdit
 	if addr and addr.text.strip_edges().is_empty():
 		addr.text = "127.0.0.1"
-
+func _wire_server_browser() -> void:
+	var net = get_node_or_null("/root/Network")
+	if net == null or main_menu == null:
+		return
+	if net.has_signal("lan_servers_changed") and not net.lan_servers_changed.is_connected(_on_servers_changed):
+		net.lan_servers_changed.connect(_on_servers_changed)
+	if net.has_method("start_lan_discovery"):
+		net.start_lan_discovery()
+	_on_servers_changed([])
+func _on_servers_changed(_servers: Array) -> void:
+	var net = get_node_or_null("/root/Network")
+	if net == null or main_menu == null or not main_menu.has_method("set_server_list"):
+		return
+	main_menu.set_server_list(net.get_server_list())
+func _on_refresh_servers() -> void:
+	var net = get_node_or_null("/root/Network")
+	if net == null:
+		return
+	net.refresh_lan_discovery()
+	_on_servers_changed([])
+func _on_add_server(address: String) -> void:
+	var net = get_node_or_null("/root/Network")
+	if net == null:
+		return
+	net.save_server(address, address)
+	_on_servers_changed([])
+func _on_remove_server(address: String) -> void:
+	var net = get_node_or_null("/root/Network")
+	if net == null or address.is_empty():
+		return
+	net.remove_server(address)
+	_on_servers_changed([])
 func _setup_player():
 	var player = get_node_or_null("Player") as Character
 	if not player:
@@ -48,13 +79,11 @@ func _setup_player():
 	if hotbar_ui:
 		hotbar_ui.set_player(player)
 		hotbar_ui.refresh()
-	# Force first-person FPS view like old slop player
 	var spring = player.get_node_or_null("SpringArmOffset")
 	if spring:
 		spring.is_first_person = true
 		spring.call_deferred("_apply_perspective")
 	_update_mouse()
-
 func _apply_profile(nickname: String, skin: String):
 	var player = get_node_or_null("Player") as Character
 	if not player:
@@ -68,7 +97,6 @@ func _apply_profile(nickname: String, skin: String):
 	player.set_player_skin(skin_enum)
 	if player.get("nickname"):
 		player.nickname.text = nick
-
 func _on_host_pressed(nickname: String, skin: String) -> void:
 	var net = get_node_or_null("/root/Network")
 	if net == null:
@@ -82,7 +110,6 @@ func _on_host_pressed(nickname: String, skin: String) -> void:
 		main_menu.hide_menu()
 	get_tree().paused = false
 	_update_mouse()
-
 func _on_join_pressed(nickname: String, skin: String, address: String) -> void:
 	var net = get_node_or_null("/root/Network")
 	if net == null:
@@ -96,19 +123,15 @@ func _on_join_pressed(nickname: String, skin: String, address: String) -> void:
 		main_menu.hide_menu()
 	get_tree().paused = false
 	_update_mouse()
-
 func _on_quit_pressed() -> void:
 	var net = get_node_or_null("/root/Network")
 	if net and net.has_method("leave_game"):
 		net.leave_game()
 	get_tree().paused = false
 	get_tree().quit()
-
 func _menu_visible() -> bool:
 	return main_menu and main_menu.is_menu_visible()
-
 func _input(event):
-	# Esc re-opens the menu before a session starts (re-freezes the world)
 	if event.is_action_pressed("pause"):
 		if main_menu and not main_menu.is_menu_visible() and not multiplayer.has_multiplayer_peer():
 			main_menu.show_menu()
@@ -117,7 +140,6 @@ func _input(event):
 		return
 	if _menu_visible():
 		return
-	# Click to recapture mouse for FPS look
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		if not inventory_visible and not (chat_ui and chat_ui.is_chat_visible()):
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -126,7 +148,6 @@ func _input(event):
 	elif event.is_action_pressed("toggle_chat"):
 		if chat_ui:
 			chat_ui.toggle_chat()
-
 func toggle_inventory():
 	var player = get_node_or_null("Player") as Character
 	if not player:
@@ -139,29 +160,22 @@ func toggle_inventory():
 	else:
 		inventory_ui.close_inventory()
 	_update_mouse()
-
 func is_inventory_visible() -> bool:
 	return inventory_visible
-
 func is_chat_visible() -> bool:
 	return chat_ui and chat_ui.is_chat_visible()
-
 func is_gameplay_input_blocked() -> bool:
 	return _menu_visible() or inventory_visible or (chat_ui and chat_ui.is_chat_visible())
-
 func is_camera_input_blocked() -> bool:
 	return is_gameplay_input_blocked()
-
 func _on_inventory_closed():
 	inventory_visible = false
 	_update_mouse()
-
 func _update_mouse():
 	if _menu_visible() or inventory_visible or (chat_ui and chat_ui.is_chat_visible()):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-
 func update_local_inventory_display():
 	if inventory_ui:
 		inventory_ui.refresh_display()

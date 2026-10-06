@@ -146,6 +146,62 @@ layout_mode = 2
 theme_override_constants/separation = 30
 theme_override_styles/separator = SubResource("StyleBoxLine_npnbc")
 
+[node name="ServerSection" type="VBoxContainer" parent="MainContainer/MainMenu" unique_id=7712408463]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="ServerLabel" type="Label" parent="MainContainer/MainMenu/ServerSection" unique_id=7712408464]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Servers (LAN + Saved):"
+horizontal_alignment = 1
+
+[node name="ServerList" type="ItemList" parent="MainContainer/MainMenu/ServerSection" unique_id=7712408465]
+custom_minimum_size = Vector2(500, 140)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 22
+select_mode = 0
+
+[node name="ServerButtons" type="HBoxContainer" parent="MainContainer/MainMenu/ServerSection" unique_id=7712408466]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Refresh" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=7712408467]
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
+text = "REFRESH"
+flat = true
+
+[node name="Add" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=7712408468]
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
+text = "+ ADD IP"
+flat = true
+
+[node name="Remove" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=7712408469]
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
+text = "- REMOVE"
+flat = true
+
 [node name="Buttons" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1105640710]
 layout_mode = 2
 theme_override_constants/separation = 30
@@ -196,3 +252,7 @@ flat = true
 [connection signal="pressed" from="MainContainer/MainMenu/Buttons/Host" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Buttons/Join" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Option4/Quit" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Refresh" to="." method="_on_refresh_pressed"]
+[connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Add" to="." method="_on_add_server_pressed"]
+[connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Remove" to="." method="_on_remove_server_pressed"]
+[connection signal="item_selected" from="MainContainer/MainMenu/ServerSection/ServerList" to="." method="_on_server_selected"]

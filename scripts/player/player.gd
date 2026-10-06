@@ -1,8 +1,6 @@
 class_name Character
 extends CharacterBody3D
-
 enum SkinColor { BLUE, YELLOW, GREEN, RED }
-
 const NORMAL_SPEED = 6.0
 const SPRINT_SPEED = 10.0
 const JUMP_VELOCITY = 7.5
@@ -52,22 +50,23 @@ const HEAD_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach/"
 const HAND_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach/"
 const BACK_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/BackAttach/"
 const FIRST_PERSON_HIDDEN_BONES: Array[StringName] = [&"Head", &"HeadTop"]
-
+const SKIN_TINTS := {
+	0: Color(0.25, 0.5, 0.95),
+	1: Color(0.95, 0.78, 0.2),
+	2: Color(0.3, 0.8, 0.35),
+	3: Color(0.9, 0.28, 0.28),
+}
 @export var skin_color: SkinColor = SkinColor.BLUE
-
 @export_category("Nickname")
 @export_range(0.0, 1.0, 0.01) var nickname_clearance: float = 0.2
-
 @export_category("Objects")
 @export var _body: Node3D = null
 @export var _spring_arm_offset: SpringArmCharacter = null
-
 @export_category("Skin Colors")
 @export var blue_texture: CompressedTexture2D
 @export var yellow_texture: CompressedTexture2D
 @export var green_texture: CompressedTexture2D
 @export var red_texture: CompressedTexture2D
-
 var player_inventory: PlayerInventory
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var can_double_jump = true
@@ -77,7 +76,6 @@ var is_collecting := false
 var shift_locked := true
 signal health_updated(health)
 var health: int = 100
-
 var _current_speed: float
 var _spawn_point = Vector3(0, 5, 0)
 var _animation_sequence := 0
@@ -102,9 +100,7 @@ var _rig_root: Node3D
 var _rig_skeleton: Skeleton3D
 var _rig_pairs: Array = []
 var _rig_active := false
-
 @onready var nickname: Label3D = $PlayerNick/Nickname
-
 @onready var _bottom_mesh: MeshInstance3D = get_node("GodotRobot3D/RobotArmature/Skeleton3D/Bottom")
 @onready var _chest_mesh: MeshInstance3D = get_node("GodotRobot3D/RobotArmature/Skeleton3D/Chest")
 @onready var _face_mesh: MeshInstance3D = get_node("GodotRobot3D/RobotArmature/Skeleton3D/Face")
@@ -112,16 +108,12 @@ var _rig_active := false
 @onready var _skeleton: Skeleton3D = get_node("GodotRobot3D/RobotArmature/Skeleton3D")
 @onready var _pickup_area: Area3D = $GodotRobot3D/InfrontArea3D
 @onready var _first_person_hud: CanvasLayer = $FirstPersonHUD
-
-
 func _enter_tree():
-	# Main slop map uses fixed name "Player" - always local authority (ignore stale net peer)
 	if str(name) == "Player":
 		set_multiplayer_authority(1)
 		if has_node("SpringArmOffset/SpringArm3D/Camera3D"):
 			$SpringArmOffset/SpringArm3D/Camera3D.current = true
 		return
-	# Offline single-player support: if no multiplayer peer, make local player authority
 	if not multiplayer.has_multiplayer_peer():
 		set_multiplayer_authority(1)
 		if has_node("SpringArmOffset/SpringArm3D/Camera3D"):
@@ -129,22 +121,37 @@ func _enter_tree():
 		return
 	set_multiplayer_authority(str(name).to_int())
 	$SpringArmOffset/SpringArm3D/Camera3D.current = is_multiplayer_authority()
-
-
 func damage(amount):
+	var was_alive := health > 0
 	health -= int(amount)
 	health_updated.emit(health)
+	_play_hit_sound()
 	if health <= 0:
 		health = 100
 		health_updated.emit(health)
+		if was_alive:
+			_play_death_sound()
 		global_position = _spawn_point
 		velocity = Vector3.ZERO
-
+func _play_hit_sound() -> void:
+	var audio := get_node_or_null("/root/Audio")
+	if audio and audio.has_method("play"):
+		audio.play("sounds/enemy_hurt.ogg")
+func _play_death_sound() -> void:
+	var audio := get_node_or_null("/root/Audio")
+	if audio and audio.has_method("play"):
+		audio.play("sounds/enemy_destroy.ogg")
+@rpc("any_peer", "call_local", "reliable")
+func take_pvp_hit(amount: float, attacker_id: int) -> void:
+	if attacker_id == get_multiplayer_authority():
+		return
+	if amount <= 0.0 or amount > 100.0:
+		return
+	damage(amount)
 func _ready():
 	add_to_group("player")
 	_ensure_shift_lock_action()
 	_setup_SLOPPYSLIMYSHOWDOWN_rig()
-	# Offline: always create inventory even without server
 	if not multiplayer.has_multiplayer_peer():
 		player_inventory = PlayerInventory.new()
 		_add_starting_items()
@@ -155,7 +162,6 @@ func _ready():
 		call_deferred("_sync_equipment_appearance")
 		if not is_multiplayer_authority():
 			call_deferred("_sync_inventory_to_owner")
-
 	set_player_skin(skin_color)
 	var animation_player := get_node_or_null("GodotRobot3D/AnimationPlayer") as AnimationPlayer
 	if animation_player:
@@ -165,7 +171,6 @@ func _ready():
 	call_deferred("_update_nickname_height")
 	if not multiplayer.is_server():
 		call_deferred("_request_equipment_appearance")
-	# Force FPS view for slop map (was third-person by default)
 	if _spring_arm_offset:
 		_spring_arm_offset.is_first_person = true
 	if _spring_arm_offset:
@@ -176,11 +181,8 @@ func _ready():
 			_spring_arm_offset.perspective_changed.connect(_on_camera_perspective_changed)
 		_on_camera_perspective_changed(true)
 		nickname.visible = false
-
-
 func _is_local_main_player() -> bool:
 	return str(name) == "Player" or not multiplayer.has_multiplayer_peer() or is_multiplayer_authority()
-
 func _on_camera_perspective_changed(first_person: bool) -> void:
 	if _rig_root:
 		_rig_root.visible = _rig_active and not (first_person and _is_local_main_player())
@@ -207,8 +209,6 @@ func _on_camera_perspective_changed(first_person: bool) -> void:
 	else:
 		_pickup_area.rotation = Vector3.ZERO
 		call_deferred("_refresh_nickname_height_after_perspective_change")
-
-
 func _setup_SLOPPYSLIMYSHOWDOWN_rig() -> void:
 	_rig_skeleton = _find_rig_skeleton()
 	if _rig_skeleton == null:
@@ -233,8 +233,6 @@ func _setup_SLOPPYSLIMYSHOWDOWN_rig() -> void:
 	if not _skeleton.skeleton_updated.is_connected(_on_skeleton_updated):
 		_skeleton.skeleton_updated.connect(_on_skeleton_updated)
 	_sync_baked_skeleton()
-
-
 func _find_rig_skeleton() -> Skeleton3D:
 	_rig_root = get_node_or_null("GodotRobot3D/RobotArmature/SLOPPYSLIMYSHOWDOWN") as Node3D
 	if _rig_root == null or _skeleton == null:
@@ -243,21 +241,18 @@ func _find_rig_skeleton() -> Skeleton3D:
 	if found.is_empty():
 		return null
 	return found[0] as Skeleton3D
-
-
 func _sync_baked_skeleton() -> void:
 	if not _rig_active or _rig_skeleton == null or _skeleton == null:
 		return
 	for pair in _rig_pairs:
 		var live_idx: int = pair[0]
 		var rig_idx: int = pair[1]
-		_rig_skeleton.set_bone_global_pose(rig_idx, _skeleton.get_bone_global_pose(live_idx))
-
-
+		var pose := _skeleton.get_bone_global_pose(live_idx)
+		if pose.basis.x.length() < 0.0001 or pose.basis.y.length() < 0.0001 or pose.basis.z.length() < 0.0001:
+			continue
+		_rig_skeleton.set_bone_global_pose(rig_idx, pose)
 func _on_skeleton_updated() -> void:
 	_sync_baked_skeleton()
-
-
 func _update_SLOPPYSLIMYSHOWDOWN_squash() -> void:
 	if _squash_node == null:
 		return
@@ -304,8 +299,6 @@ func _update_SLOPPYSLIMYSHOWDOWN_squash() -> void:
 		_SLOPPYSLIMYSHOWDOWN_rest_pos.y * (_SLOPPYSLIMYSHOWDOWN_scale.y / _SLOPPYSLIMYSHOWDOWN_base.y) + _SLOPPYSLIMYSHOWDOWN_hop,
 		_SLOPPYSLIMYSHOWDOWN_rest_pos.z * (_SLOPPYSLIMYSHOWDOWN_scale.z / _SLOPPYSLIMYSHOWDOWN_base.z)
 	)
-
-
 func _refresh_nickname_height_after_perspective_change() -> void:
 	if not is_multiplayer_authority() or _is_local_first_person():
 		return
@@ -314,29 +307,23 @@ func _refresh_nickname_height_after_perspective_change() -> void:
 	nickname.visible = true
 	if multiplayer.is_server():
 		_broadcast_nickname_height(height)
-
-
 func _align_pickup_area_with_camera() -> void:
 	var pickup_rotation := _pickup_area.global_rotation
 	pickup_rotation.y = wrapf(_spring_arm_offset.global_rotation.y + _pickup_area_camera_yaw_offset, -PI, PI)
 	_pickup_area.global_rotation = pickup_rotation
-
-
 func _physics_process(delta):
 	if str(name) == "Player":
-		pass # main map player always simulates (fixes stale peer freeze / floating Idle)
+		pass
 	elif multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		return
 	if not multiplayer.has_multiplayer_peer() and not is_inside_tree():
 		return
-
 	if is_on_floor():
 		if _SLOPPYSLIMYSHOWDOWN_air_time > 0.25:
 			_SLOPPYSLIMYSHOWDOWN_squash_time = 0.22
 		_SLOPPYSLIMYSHOWDOWN_air_time = 0.0
 	else:
 		_SLOPPYSLIMYSHOWDOWN_air_time += delta
-
 	var current_scene = get_tree().get_current_scene()
 	var should_freeze = false
 	if current_scene:
@@ -346,10 +333,8 @@ func _physics_process(delta):
 			should_freeze = true
 		elif current_scene.has_method("is_inventory_visible") and current_scene.is_inventory_visible():
 			should_freeze = true
-
 	if Input.is_action_just_pressed("shift_lock"):
 		shift_locked = not shift_locked
-
 	if is_collecting:
 		velocity.x = 0
 		velocity.z = 0
@@ -357,8 +342,6 @@ func _physics_process(delta):
 		move_and_slide()
 		_separate_from_players()
 		return
-	# Attacking no longer roots you - swing while moving (only blocks new swings)
-
 	if should_freeze:
 		_freeze()
 		_apply_gravity(delta)
@@ -366,59 +349,45 @@ func _physics_process(delta):
 		_separate_from_players()
 		_request_animation(_get_body_animation())
 		return
-
 	if Input.is_action_just_pressed("pickup") and is_on_floor() and _has_collectible_item_in_front():
 		is_collecting = true
 		_request_animation(&"Emote2", true)
 		return
-
 	if Input.is_action_just_pressed("attack"):
 		_start_attack()
 		return
-
 	if is_on_floor():
 		can_double_jump = true
 		has_double_jumped = false
-
 		if Input.is_action_just_pressed("jump"):
 			velocity.y = JUMP_VELOCITY
 			can_double_jump = true
 			_request_animation(&"Jump", true)
 	else:
 		_apply_gravity(delta)
-
 		if can_double_jump and not has_double_jumped and Input.is_action_just_pressed("jump"):
 			velocity.y = JUMP_VELOCITY
 			has_double_jumped = true
 			can_double_jump = false
 			_request_animation(&"Jump2", true)
-
 	_move()
 	var collided = move_and_slide()
 	if collided:
 		_push_collided_items()
 	_separate_from_players()
-
 	_request_animation(_get_body_animation())
-
-
 func _apply_gravity(delta: float) -> void:
 	if is_on_floor():
 		return
 	var gravity_multiplier = FALL_GRAVITY_MULTIPLIER if velocity.y < 0 else 1.0
 	velocity.y -= gravity * gravity_multiplier * delta
-
-
 func _equipped_weapon_id() -> String:
 	if player_inventory:
 		return player_inventory.get_held_weapon_id()
 	return ""
-
-
 func _get_body_animation() -> StringName:
 	var anim: StringName = _body.get_movement_animation(velocity)
 	return anim
-
 func _start_attack() -> void:
 	if is_attacking or is_collecting:
 		return
@@ -432,19 +401,14 @@ func _start_attack() -> void:
 		_perform_melee_attack()
 		await get_tree().create_timer(0.13).timeout
 		is_attacking = false
-
-
 func _on_animation_finished(animation_name: StringName) -> void:
 	match animation_name:
 		&"Attack1":
-			# Melee weapons land when the swing finishes (water gun already fired)
 			if _equipped_weapon_id() != WATER_WEAPON_ID:
 				_perform_melee_attack()
 			is_attacking = false
 		&"Emote2":
 			is_collecting = false
-
-
 func _perform_melee_attack() -> void:
 	var origin := global_position + Vector3(0, 1.0, 0)
 	for node in get_tree().get_nodes_in_group("enemy"):
@@ -456,8 +420,19 @@ func _perform_melee_attack() -> void:
 		if node.has_method("damage"):
 			node.damage(MELEE_DAMAGE)
 		_play_melee_hit(node as Node3D)
-
-
+	var my_id := multiplayer.get_unique_id()
+	for node in get_tree().get_nodes_in_group("player"):
+		if node == self:
+			continue
+		if not (node is Node3D):
+			continue
+		if not node.has_method("take_pvp_hit"):
+			continue
+		var target := (node as Node3D).global_position
+		if origin.distance_to(target) > MELEE_RANGE:
+			continue
+		node.take_pvp_hit.rpc(MELEE_DAMAGE, my_id)
+		_play_melee_hit(node as Node3D)
 func _play_melee_hit(target: Node3D) -> void:
 	var impact := MELEE_IMPACT_SCENE.instantiate() as Node3D
 	var world := get_tree().current_scene
@@ -481,8 +456,6 @@ func _play_melee_hit(target: Node3D) -> void:
 	var current_target = target.get("target_position")
 	if current_target is Vector3:
 		target.set("target_position", current_target + push)
-
-
 func _shoot_water_gun() -> void:
 	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
 	if cam == null:
@@ -491,8 +464,6 @@ func _shoot_water_gun() -> void:
 	var muzzle := _get_water_gun_muzzle(dir)
 	var shot_dir := _aim_at_crosshair(cam, dir, muzzle)
 	_spawn_droplet(muzzle, shot_dir)
-
-
 func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	var aim_point := cam.global_position + dir * 60.0
 	var space := get_world_3d().direct_space_state
@@ -505,12 +476,10 @@ func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	if to_aim.length() > 0.05:
 		return to_aim.normalized()
 	return dir
-
-
 func _spawn_droplet(muzzle: Vector3, shot_dir: Vector3) -> void:
 	var droplet = DROPLET_SCENE.instantiate()
 	if droplet.has_method("setup"):
-		droplet.setup(shot_dir, WATER_SPEED, WATER_DAMAGE)
+		droplet.setup(shot_dir, WATER_SPEED, WATER_DAMAGE, multiplayer.get_unique_id())
 	else:
 		droplet.set("velocity", shot_dir * WATER_SPEED)
 	var world = get_tree().current_scene
@@ -523,8 +492,6 @@ func _spawn_droplet(muzzle: Vector3, shot_dir: Vector3) -> void:
 	var audio = get_node_or_null("/root/Audio")
 	if audio and audio.has_method("play"):
 		audio.play("sounds/blaster.ogg")
-
-
 func _get_water_gun_muzzle(dir: Vector3) -> Vector3:
 	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
 	var fallback := global_position + Vector3(0, 1.4, 0) + dir * 0.8
@@ -542,8 +509,6 @@ func _get_water_gun_muzzle(dir: Vector3) -> Vector3:
 		var mi := meshes[i] as MeshInstance3D
 		bounds = bounds.merge(mi.global_transform * mi.get_aabb())
 	return bounds.get_center() + dir * (bounds.size.length() * 0.25 + 0.05)
-
-
 func _kick_held_weapon() -> void:
 	var weapon_id := _equipped_weapon_id()
 	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "WaterGun"))
@@ -554,8 +519,6 @@ func _kick_held_weapon() -> void:
 	var kick := create_tween()
 	kick.tween_property(weapon, "position", rest_position + Vector3(0, -0.03, 0.08), 0.05)
 	kick.tween_property(weapon, "position", rest_position, 0.1)
-
-
 func _swing_held_weapon() -> void:
 	var weapon_id := _equipped_weapon_id()
 	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "Sword"))
@@ -566,8 +529,6 @@ func _swing_held_weapon() -> void:
 	var swing := create_tween()
 	swing.tween_property(weapon, "rotation", rest_rotation + Vector3(-0.9, 0.0, 0.4), 0.1)
 	swing.tween_property(weapon, "rotation", rest_rotation, 0.15)
-
-
 func _request_animation(state: StringName, restart: bool = false) -> void:
 	if not ALLOWED_ANIMATION_STATES.has(state):
 		return
@@ -581,8 +542,6 @@ func _request_animation(state: StringName, restart: bool = false) -> void:
 		request_animation_state(state)
 	else:
 		request_animation_state.rpc_id(1, state)
-
-
 @rpc("any_peer", "call_local", "reliable")
 func request_animation_state(state: StringName) -> void:
 	if not multiplayer.is_server() or not _is_owner_request():
@@ -598,8 +557,6 @@ func request_animation_state(state: StringName) -> void:
 	else:
 		_server_pickup_animation_started_msec = -1
 	_server_publish_animation(state)
-
-
 func _server_consume_animation_request_token() -> bool:
 	var now := Time.get_ticks_msec()
 	if _last_server_animation_token_update_msec == 0:
@@ -611,21 +568,16 @@ func _server_consume_animation_request_token() -> bool:
 			_server_animation_request_tokens + elapsed_seconds * SERVER_ANIMATION_REQUESTS_PER_SECOND
 		)
 		_last_server_animation_token_update_msec = now
-
 	if _server_animation_request_tokens < 1.0:
 		return false
 	_server_animation_request_tokens -= 1.0
 	return true
-
-
 func _server_publish_animation(state: StringName) -> void:
 	if not multiplayer.is_server():
 		return
 	_animation_sequence += 1
 	sync_animation_state.rpc(state, _animation_sequence)
 	sync_animation_state(state, _animation_sequence)
-
-
 @rpc("any_peer", "call_local", "reliable")
 func sync_animation_state(state: StringName, sequence: int) -> void:
 	var sender_id := multiplayer.get_remote_sender_id()
@@ -634,32 +586,23 @@ func sync_animation_state(state: StringName, sequence: int) -> void:
 	if sequence <= _last_applied_animation_sequence:
 		return
 	_last_applied_animation_sequence = sequence
-
 	if not ALLOWED_ANIMATION_STATES.has(state):
 		return
-
-	# The owner already played the input-driven state immediately.
 	if is_multiplayer_authority():
 		return
 	_body.play_animation_state(state, true)
 	_update_SLOPPYSLIMYSHOWDOWN_squash()
-
-
 func _push_collided_items() -> void:
 	for i in get_slide_collision_count():
 		var c = get_slide_collision(i)
 		if c.get_collider() is RigidBody3D:
 			apply_force_to_server_object.rpc_id(1, c.get_collider().name, -c.get_normal())
-
-
 func _separate_from_players() -> void:
 	for node in get_tree().get_nodes_in_group("player"):
 		if node == self:
 			continue
 		if node is Node3D:
 			_push_away_from(node)
-
-
 func _push_away_from(other: Node3D) -> void:
 	var delta := global_position - other.global_position
 	if absf(delta.y) > PLAYER_SEPARATION_HEIGHT:
@@ -672,15 +615,12 @@ func _push_away_from(other: Node3D) -> void:
 		delta = Vector3.RIGHT
 		distance = 0.001
 	global_position += (delta / distance) * (PLAYER_SEPARATION_DISTANCE - distance)
-
-
 func _process(_delta):
 	if str(name) == "Player":
-		pass # main map player always processes
+		pass
 	elif multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		return
 	elif not multiplayer.has_multiplayer_peer():
-		# allow offline processing as authority
 		pass
 	elif not is_multiplayer_authority():
 		return
@@ -696,26 +636,31 @@ func _process(_delta):
 	)
 	_check_out_of_bounds()
 	_update_SLOPPYSLIMYSHOWDOWN_squash()
-
-
 func _freeze():
 	velocity.x = 0
 	velocity.z = 0
 	_current_speed = 0
 	_request_animation(&"Idle")
-
-
 func _move() -> void:
 	var input_direction: Vector2 = Vector2.ZERO
 	if str(name) == "Player" or is_multiplayer_authority() or not multiplayer.has_multiplayer_peer():
 		input_direction = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
-
-	var direction: Vector3 = transform.basis * Vector3(input_direction.x, 0, input_direction.y).normalized()
-
+	var direction: Vector3
+	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
+	if cam:
+		direction = cam.global_transform.basis * Vector3(input_direction.x, 0, input_direction.y)
+		direction.y = 0.0
+		if direction.length() > 0.001:
+			direction = direction.normalized()
+		else:
+			direction = Vector3.ZERO
+	else:
+		direction = Vector3(input_direction.x, 0, input_direction.y)
+		if _spring_arm_offset:
+			direction = direction.rotated(Vector3.UP, _spring_arm_offset.global_rotation.y)
+		if direction.length() > 0.001:
+			direction = direction.normalized()
 	_is_running()
-	if _spring_arm_offset:
-		direction = direction.rotated(Vector3.UP, _spring_arm_offset.rotation.y)
-
 	if direction:
 		velocity.x = direction.x * _current_speed
 		velocity.z = direction.z * _current_speed
@@ -724,21 +669,16 @@ func _move() -> void:
 		else:
 			_body.apply_rotation(velocity)
 		return
-
 	velocity.x = move_toward(velocity.x, 0, _current_speed)
 	velocity.z = move_toward(velocity.z, 0, _current_speed)
 	if shift_locked:
 		_face_camera()
-
-
 func _is_running() -> bool:
 	if Input.is_action_pressed("shift"):
 		_current_speed = SPRINT_SPEED
 		return true
 	_current_speed = NORMAL_SPEED
 	return false
-
-
 func _face_camera() -> void:
 	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
 	if cam == null:
@@ -748,9 +688,8 @@ func _face_camera() -> void:
 	if forward.length() < 0.001:
 		return
 	forward = forward.normalized()
-	_body.rotation.y = lerp_angle(_body.rotation.y, atan2(forward.x, forward.z), 0.5)
-
-
+	var target_yaw := atan2(forward.x, forward.z)
+	_body.global_rotation.y = lerp_angle(_body.global_rotation.y, target_yaw, 0.5)
 func _ensure_shift_lock_action() -> void:
 	if InputMap.has_action("shift_lock"):
 		return
@@ -758,18 +697,12 @@ func _ensure_shift_lock_action() -> void:
 	var key_event := InputEventKey.new()
 	key_event.physical_keycode = KEY_X
 	InputMap.action_add_event("shift_lock", key_event)
-
-
 func _check_out_of_bounds():
 	if global_transform.origin.y < -15.0:
 		_reset_position_after_fall()
-
-
 func _reset_position_after_fall():
 	global_transform.origin = _spawn_point
 	velocity = Vector3.ZERO
-
-
 func _get_texture_from_name(color: SkinColor) -> CompressedTexture2D:
 	match color:
 		SkinColor.BLUE:
@@ -782,37 +715,50 @@ func _get_texture_from_name(color: SkinColor) -> CompressedTexture2D:
 			return yellow_texture
 		_:
 			return blue_texture
-
-
 func set_player_skin(skin_name: SkinColor) -> void:
 	var texture = _get_texture_from_name(skin_name)
-
 	_set_mesh_texture(_bottom_mesh, texture)
 	_set_mesh_texture(_chest_mesh, texture)
 	_set_mesh_texture(_face_mesh, texture)
 	_set_mesh_texture(_limbs_head_mesh, texture)
-
-
+	_tint_sloppy_rig(_get_skin_tint(skin_name))
 func _set_mesh_texture(mesh_instance: MeshInstance3D, texture: CompressedTexture2D) -> void:
 	if mesh_instance:
 		var new_material := StandardMaterial3D.new()
 		new_material.albedo_texture = texture
 		mesh_instance.set_surface_override_material(0, new_material)
-
-
+func _get_skin_tint(skin_name: SkinColor) -> Color:
+	return SKIN_TINTS.get(int(skin_name), Color(0.25, 0.5, 0.95))
+func _tint_sloppy_rig(color: Color) -> void:
+	var root := _rig_root
+	if root == null:
+		root = get_node_or_null("GodotRobot3D/RobotArmature/SLOPPYSLIMYSHOWDOWN") as Node3D
+	if root == null:
+		return
+	for child in root.find_children("*", "MeshInstance3D", true, false):
+		var mi := child as MeshInstance3D
+		if mi == null:
+			continue
+		var mat := StandardMaterial3D.new()
+		var old_tex: Texture2D = null
+		var active := mi.get_active_material(0)
+		if active is StandardMaterial3D and (active as StandardMaterial3D).albedo_texture:
+			old_tex = (active as StandardMaterial3D).albedo_texture
+		if old_tex:
+			mat.albedo_texture = old_tex
+		mat.albedo_color = color
+		mat.roughness = 0.55
+		mi.set_surface_override_material(0, mat)
 @rpc("any_peer", "call_local", "reliable")
 func sync_inventory_to_owner(inventory_data: Dictionary):
 	var sender_id = multiplayer.get_remote_sender_id()
 	if sender_id != 1 and not (sender_id == 0 and multiplayer.is_server()):
 		return
-
 	if not is_multiplayer_authority():
 		return
-
 	if not player_inventory:
 		player_inventory = PlayerInventory.new()
 	player_inventory.from_dict(inventory_data)
-
 	var level_scene = get_tree().get_current_scene()
 	if (
 		level_scene
@@ -820,13 +766,10 @@ func sync_inventory_to_owner(inventory_data: Dictionary):
 		and level_scene.has_method("update_local_inventory_display")
 	):
 		level_scene.update_local_inventory_display()
-
-
 @rpc("any_peer", "call_local", "reliable")
 func request_move_item(from_slot: int, to_slot: int, quantity: int = -1):
 	if not multiplayer.is_server():
 		return
-
 	var requesting_client = multiplayer.get_remote_sender_id()
 	if not _is_owner_request():
 		push_warning(
@@ -838,18 +781,14 @@ func request_move_item(from_slot: int, to_slot: int, quantity: int = -1):
 			)
 		)
 		return
-
 	if not player_inventory:
 		return
-
 	if not player_inventory.is_slot_active(from_slot) or not player_inventory.is_slot_active(to_slot):
 		push_warning("Invalid slot indices: from=" + str(from_slot) + " to=" + str(to_slot))
 		return
-
 	if quantity != -1 and quantity <= 0:
 		push_warning("Invalid move quantity: " + str(quantity))
 		return
-
 	var success = false
 	if quantity == -1:
 		success = player_inventory.move_item(from_slot, to_slot)
@@ -857,16 +796,12 @@ func request_move_item(from_slot: int, to_slot: int, quantity: int = -1):
 			success = player_inventory.swap_items(from_slot, to_slot)
 	else:
 		success = player_inventory.move_item(from_slot, to_slot, quantity)
-
 	if success:
 		_sync_inventory_to_owner()
-
-
 @rpc("any_peer", "call_local", "reliable")
 func request_add_item(item_id: String, quantity: int = 1):
 	if not multiplayer.is_server():
 		return
-
 	var requesting_client = multiplayer.get_remote_sender_id()
 	var is_local_server_call = requesting_client == 0 and multiplayer.get_unique_id() == 1
 	if requesting_client != 1 and not is_local_server_call:
@@ -874,51 +809,37 @@ func request_add_item(item_id: String, quantity: int = 1):
 			"Client " + str(requesting_client) + " tried to add items to player " + str(get_multiplayer_authority())
 		)
 		return
-
 	if not player_inventory:
 		return
-
 	if quantity <= 0:
 		push_warning("Invalid quantity: " + str(quantity))
 		return
-
 	var item = ItemDatabase.get_item(item_id)
 	if not item:
 		push_warning("Item not found: " + item_id)
 		return
-
 	var remaining = player_inventory.add_item(item, quantity)
 	var added = quantity - remaining
-
 	if added > 0:
 		_sync_inventory_to_owner()
-
-
 func request_add_single_item(item_id: String) -> bool:
 	if not multiplayer.is_server():
 		return false
-
 	if player_inventory == null:
 		return false
-
 	var item = ItemDatabase.get_item(item_id)
 	if not item:
 		push_warning("Item not found: " + item_id)
 		return false
-
 	var remaining = player_inventory.add_item(item, 1)
-
 	if remaining == 0:
 		_sync_inventory_to_owner()
 		return true
 	return false
-
-
 @rpc("any_peer", "call_local", "reliable")
 func request_remove_item(item_id: String, quantity: int = 1):
 	if not multiplayer.is_server():
 		return
-
 	var requesting_client = multiplayer.get_remote_sender_id()
 	if not _is_owner_request():
 		push_warning(
@@ -930,20 +851,14 @@ func request_remove_item(item_id: String, quantity: int = 1):
 			)
 		)
 		return
-
 	if not player_inventory:
 		return
-
 	if quantity <= 0:
 		push_warning("Invalid quantity: " + str(quantity))
 		return
-
 	var removed = player_inventory.remove_item(item_id, quantity)
-
 	if removed > 0:
 		_sync_inventory_to_owner()
-
-
 @rpc("authority", "call_local", "reliable")
 func add_world_item(scene_path: String, player_position: Vector3) -> void:
 	var item_container = get_node_or_null("/root/Level/Environment/ItemContainer")
@@ -963,12 +878,8 @@ func add_world_item(scene_path: String, player_position: Vector3) -> void:
 		return
 	item_container.add_child(instance_item, true)
 	instance_item.global_position = player_position
-
-
 func get_inventory() -> PlayerInventory:
 	return player_inventory
-
-
 func _sync_inventory_to_owner() -> void:
 	if not multiplayer.is_server() or not player_inventory:
 		return
@@ -977,8 +888,6 @@ func _sync_inventory_to_owner() -> void:
 		sync_inventory_to_owner(player_inventory.to_dict())
 	else:
 		sync_inventory_to_owner.rpc_id(owner_id, player_inventory.to_dict())
-
-
 @rpc("any_peer", "call_local", "reliable")
 func request_equip_item(from_slot: int, item_type: Item.ItemType) -> void:
 	if not multiplayer.is_server() or not _is_owner_request():
@@ -1001,8 +910,6 @@ func request_equip_item(from_slot: int, item_type: Item.ItemType) -> void:
 	if player_inventory.equip_from_slot(from_slot, item_type):
 		_sync_inventory_to_owner()
 		_sync_equipment_appearance()
-
-
 @rpc("any_peer", "call_local", "reliable")
 func request_unequip_item(item_type: Item.ItemType, destination_slot: int = -1) -> void:
 	if not multiplayer.is_server() or not _is_owner_request():
@@ -1023,13 +930,9 @@ func request_unequip_item(item_type: Item.ItemType, destination_slot: int = -1) 
 	if player_inventory.unequip_to_slot(item_type, destination_slot):
 		_sync_inventory_to_owner()
 		_sync_equipment_appearance()
-
-
 func _is_owner_request() -> bool:
 	var sender := multiplayer.get_remote_sender_id()
 	return sender == get_multiplayer_authority() or (sender == 0 and multiplayer.is_server())
-
-
 func _sync_equipment_appearance() -> void:
 	if not player_inventory:
 		return
@@ -1045,14 +948,10 @@ func _sync_equipment_appearance() -> void:
 	if multiplayer.has_multiplayer_peer():
 		sync_equipment_appearance.rpc(weapon_id, hat_id, backpack_id)
 	sync_equipment_appearance(weapon_id, hat_id, backpack_id)
-
-
 func _request_equipment_appearance() -> void:
 	if multiplayer.is_server() or not multiplayer.has_multiplayer_peer():
 		return
 	request_equipment_appearance.rpc_id(1)
-
-
 @rpc("any_peer", "reliable")
 func request_equipment_appearance() -> void:
 	if not multiplayer.is_server() or not player_inventory:
@@ -1064,8 +963,6 @@ func request_equipment_appearance() -> void:
 		return
 	_appearance_sync_requesters[requester_id] = true
 	_sync_equipment_appearance_to_peer(requester_id)
-
-
 func _sync_equipment_appearance_to_peer(peer_id: int) -> void:
 	if not multiplayer.is_server() or not player_inventory or peer_id <= 0:
 		return
@@ -1073,16 +970,12 @@ func _sync_equipment_appearance_to_peer(peer_id: int) -> void:
 	var hat_id := player_inventory.equipped_hat.item_id
 	var backpack_id := player_inventory.equipped_backpack.item_id
 	sync_equipment_appearance.rpc_id(peer_id, weapon_id, hat_id, backpack_id)
-
-
 @rpc("any_peer", "reliable")
 func sync_equipment_appearance(weapon_id: String, hat_id: String, backpack_id: String) -> void:
 	var sender := multiplayer.get_remote_sender_id()
 	if sender != 1 and not (sender == 0 and multiplayer.is_server()):
 		return
 	_set_equipment_visibility(weapon_id, hat_id, backpack_id)
-
-
 func _set_equipment_visibility(weapon_id: String, hat_id: String, backpack_id: String) -> void:
 	_equipped_hat_visual_id = hat_id
 	if weapon_id.is_empty():
@@ -1095,8 +988,6 @@ func _set_equipment_visibility(weapon_id: String, hat_id: String, backpack_id: S
 		if water_gun:
 			water_gun.visible = true
 	_apply_hold_gun_pose(weapon_id == WATER_WEAPON_ID)
-
-
 func _apply_hold_gun_pose(enabled: bool) -> void:
 	if _skeleton == null:
 		return
@@ -1108,8 +999,6 @@ func _apply_hold_gun_pose(enabled: bool) -> void:
 		if bone_idx < 0:
 			continue
 		_skeleton.set_bone_global_pose_override(bone_idx, _hold_gun_target(bone_idx), 1.0, true)
-
-
 func _hold_gun_target(bone_idx: int) -> Transform3D:
 	var bone_name := _skeleton.get_bone_name(bone_idx)
 	var parent_global := Transform3D.IDENTITY
@@ -1120,30 +1009,22 @@ func _hold_gun_target(bone_idx: int) -> Transform3D:
 	var hold_quat: Quaternion = HOLD_GUN_ARM_POSES[bone_name]
 	var target_basis := Basis(hold_quat).scaled(rest_local.basis.get_scale())
 	return parent_global * Transform3D(target_basis, rest_local.origin)
-
-
 func _broadcast_nickname_height(height: float) -> void:
 	if not multiplayer.is_server():
 		return
 	var level_scene := get_tree().get_current_scene()
 	if level_scene and level_scene.has_method("register_player_nickname_height"):
 		level_scene.register_player_nickname_height(get_multiplayer_authority(), height)
-
-
 func _set_equipment_nodes_visibility(parent_path: String, nodes_by_item: Dictionary, equipped_item_id: String) -> void:
 	for item_id in nodes_by_item:
 		var equipment := get_node_or_null(parent_path + str(nodes_by_item[item_id])) as Node3D
 		if equipment:
 			equipment.visible = item_id == equipped_item_id
-
-
 func _update_nickname_height(hat_id: String = "") -> void:
 	if not nickname:
 		return
 	nickname.visible = not _is_local_first_person()
 	_set_nickname_height(_calculate_nickname_height(hat_id))
-
-
 func _calculate_nickname_height(hat_id: String) -> float:
 	var target_height := BASE_NICKNAME_HEIGHT
 	var equipped_hat := _get_hat_node(hat_id)
@@ -1152,14 +1033,10 @@ func _calculate_nickname_height(hat_id: String) -> float:
 		if hat_top > -INF and hat_top < INF:
 			target_height = max(BASE_NICKNAME_HEIGHT, hat_top + nickname_clearance)
 	return target_height
-
-
 func _set_nickname_height(height: float) -> void:
 	var nickname_position := nickname.position
 	nickname_position.y = height
 	nickname.position = nickname_position
-
-
 func apply_synced_nickname_height(height: float) -> void:
 	if not nickname:
 		return
@@ -1168,16 +1045,10 @@ func apply_synced_nickname_height(height: float) -> void:
 		_set_nickname_height(maxf(BASE_NICKNAME_HEIGHT, height))
 	else:
 		_set_nickname_height(BASE_NICKNAME_HEIGHT)
-
-
 func _is_local_first_person() -> bool:
 	return is_multiplayer_authority() and _spring_arm_offset != null and _spring_arm_offset.is_first_person
-
-
 func get_current_nickname_height() -> float:
 	return nickname.position.y if nickname else BASE_NICKNAME_HEIGHT
-
-
 func _get_hat_node(hat_id: String) -> Node3D:
 	if HAT_NODES_BY_ITEM.has(hat_id):
 		var requested_hat_path := HEAD_EQUIPMENT_PATH + str(HAT_NODES_BY_ITEM[hat_id])
@@ -1185,20 +1056,15 @@ func _get_hat_node(hat_id: String) -> Node3D:
 		if requested_hat:
 			return requested_hat
 	return null
-
-
 func _get_visual_top(root: Node3D) -> float:
 	var visual_top := -INF
 	if root is MeshInstance3D:
 		visual_top = _get_mesh_top(root as MeshInstance3D)
-
 	for child in root.find_children("*", "MeshInstance3D", true, false):
 		var mesh_instance := child as MeshInstance3D
 		if mesh_instance:
 			visual_top = max(visual_top, _get_mesh_top(mesh_instance))
 	return visual_top
-
-
 func _get_mesh_top(mesh_instance: MeshInstance3D) -> float:
 	var visual_top := -INF
 	var mesh_bounds := mesh_instance.get_aabb()
@@ -1206,16 +1072,12 @@ func _get_mesh_top(mesh_instance: MeshInstance3D) -> float:
 		var endpoint_global := mesh_instance.to_global(mesh_bounds.get_endpoint(endpoint_index))
 		visual_top = max(visual_top, to_local(endpoint_global).y)
 	return visual_top
-
-
 func _add_starting_items():
 	if not player_inventory:
 		return
-
 	var backpack := ItemDatabase.get_item("backpack")
 	if backpack:
 		player_inventory.add_item(backpack, 1)
-
 	var starting_item_ids: Array[String] = [
 		"fedora",
 		"headphones",
@@ -1231,27 +1093,21 @@ func _add_starting_items():
 		"bone",
 		"chalice"
 	]
-
 	for item_id in starting_item_ids:
 		var item = ItemDatabase.get_item(item_id)
 		if item:
 			player_inventory.add_item(item, 1)
-
 	for i in player_inventory.slots.size():
 		var slot = player_inventory.slots[i]
 		if slot and slot.item_id == WATER_WEAPON_ID:
 			player_inventory.wielded_weapon_slot = i
 			break
 	_sync_equipment_appearance()
-
-
 func pickup() -> void:
 	if multiplayer.is_server():
 		request_pickup()
 	else:
 		request_pickup.rpc_id(1)
-
-
 @rpc("any_peer", "call_local", "reliable")
 func request_pickup() -> void:
 	if not multiplayer.is_server() or not _is_owner_request():
@@ -1260,7 +1116,6 @@ func request_pickup() -> void:
 	if now - _last_server_pickup_request_msec < PICKUP_REQUEST_COOLDOWN_MSEC:
 		return
 	_last_server_pickup_request_msec = now
-
 	var animation_elapsed := now - _server_pickup_animation_started_msec
 	if (
 		_server_pickup_animation_started_msec < 0
@@ -1274,32 +1129,23 @@ func request_pickup() -> void:
 		return
 	_server_pickup_animation_started_msec = -1
 	_server_pickup()
-
-
 func _server_pickup() -> void:
 	for item in _get_collectible_items_in_front():
 		var result := request_add_single_item(item.item_id)
 		if result and item.is_inside_tree():
 			item.queue_free()
-
-
 func _has_collectible_item_in_front() -> bool:
 	return not _get_collectible_items_in_front().is_empty()
-
-
 func _get_collectible_items_in_front() -> Array[ItemRigidBody3D]:
 	var collectible_items: Array[ItemRigidBody3D] = []
 	var pickup_area := get_node_or_null("GodotRobot3D/InfrontArea3D") as Area3D
 	if not pickup_area:
 		return collectible_items
-
 	for body in pickup_area.get_overlapping_bodies():
 		var item := body as ItemRigidBody3D
 		if item and not item.item_id.is_empty() and ItemDatabase.get_item(item.item_id):
 			collectible_items.append(item)
 	return collectible_items
-
-
 @rpc("any_peer", "call_local", "reliable")
 func apply_force_to_server_object(object_name: String, normal: Vector3) -> void:
 	var object_node = get_node_or_null("/root/Level/Environment/ItemContainer")
@@ -1307,8 +1153,6 @@ func apply_force_to_server_object(object_name: String, normal: Vector3) -> void:
 		for n in object_node.get_children():
 			if n.name == object_name and n is RigidBody3D:
 				n.apply_force(normal * 100)
-
-
 func _is_grounded_on_server() -> bool:
 	if not multiplayer.is_server() or not is_inside_tree():
 		return false
