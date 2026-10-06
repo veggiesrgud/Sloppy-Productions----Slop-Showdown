@@ -154,7 +154,7 @@ alignment = 1
 [node name="ServerLabel" type="Label" parent="MainContainer/MainMenu/ServerSection" unique_id=7712408464]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "Servers (LAN + Saved):"
+text = "Active Servers:"
 horizontal_alignment = 1
 
 [node name="ServerList" type="ItemList" parent="MainContainer/MainMenu/ServerSection" unique_id=7712408465]

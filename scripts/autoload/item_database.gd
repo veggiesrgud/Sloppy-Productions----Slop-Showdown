@@ -7,9 +7,6 @@ const SHERIFF_HAT_ICON: Texture2D = preload("res://assets/items/hats/icons/sheri
 const SOMBRERO_ICON: Texture2D = preload("res://assets/items/hats/icons/sombrero.png")
 const WIZARD_HAT_ICON: Texture2D = preload("res://assets/items/hats/icons/wizard_hat.png")
 const BACKPACK_ICON: Texture2D = preload("res://assets/items/backpacks/icons/backpack.png")
-const SWORD_ICON: Texture2D = preload("res://assets/items/weapons/icons/sword.png")
-const SWORD_BIG_ICON: Texture2D = preload("res://assets/items/weapons/icons/sword_big.png")
-const AXE_ICON: Texture2D = preload("res://assets/items/weapons/icons/axe.png")
 const WATERGUN_ICON: Texture2D = preload("res://sprites/crosshair.png")
 const CHICKEN_LEG_ICON: Texture2D = preload("res://assets/items/misc/icons/chicken_leg.png")
 const BONE_ICON: Texture2D = preload("res://assets/items/misc/icons/bone.png")
@@ -72,36 +69,6 @@ func _create_sample_items():
 		BACKPACK_ICON,
 		true,
 		60
-	)
-	_create_item(
-		"sword",
-		"Sword",
-		"A balanced hand sword.",
-		Item.ItemType.WEAPON,
-		"res://scenes/items/weapons/sword.tscn",
-		SWORD_ICON,
-		true,
-		80
-	)
-	_create_item(
-		"sword_big",
-		"Big Sword",
-		"A large two-handed sword.",
-		Item.ItemType.WEAPON,
-		"res://scenes/items/weapons/sword_big.tscn",
-		SWORD_BIG_ICON,
-		true,
-		120
-	)
-	_create_item(
-		"axe",
-		"Small Axe",
-		"A compact axe with a sharp steel head.",
-		Item.ItemType.WEAPON,
-		"res://scenes/items/weapons/axe.tscn",
-		AXE_ICON,
-		true,
-		95
 	)
 	_create_item(
 		"water_gun",

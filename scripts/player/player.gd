@@ -30,7 +30,7 @@ const HAT_NODES_BY_ITEM := {
 	"sombrero": "Sombrero",
 	"wizard_hat": "WizardHat"
 }
-const WEAPON_NODES_BY_ITEM := {"sword": "Sword", "sword_big": "SwordBig", "axe": "Axe", "water_gun": "WaterGun"}
+const WEAPON_NODES_BY_ITEM := {"water_gun": "WaterGun"}
 const DROPLET_SCENE: PackedScene = preload("res://objects/droplet.tscn")
 const WATER_WEAPON_ID := "water_gun"
 const MELEE_DAMAGE := 25.0
@@ -521,7 +521,7 @@ func _kick_held_weapon() -> void:
 	kick.tween_property(weapon, "position", rest_position, 0.1)
 func _swing_held_weapon() -> void:
 	var weapon_id := _equipped_weapon_id()
-	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "Sword"))
+	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "WaterGun"))
 	var weapon := get_node_or_null(HAND_EQUIPMENT_PATH + node_name) as Node3D
 	if weapon == null:
 		return
@@ -636,6 +636,20 @@ func _process(_delta):
 	)
 	_check_out_of_bounds()
 	_update_SLOPPYSLIMYSHOWDOWN_squash()
+	_apply_aim_zoom(_delta)
+
+
+func _apply_aim_zoom(delta: float) -> void:
+	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
+	if cam == null or _spring_arm_offset == null:
+		return
+	var blocked := false
+	var current_scene := get_tree().get_current_scene()
+	if current_scene and current_scene.has_method("is_camera_input_blocked"):
+		blocked = current_scene.is_camera_input_blocked()
+	var want_zoom := Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not blocked and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	var target_fov := 55.0 if want_zoom else (90.0 if _spring_arm_offset.is_first_person else 75.0)
+	cam.fov = lerpf(cam.fov, target_fov, clampf(delta * 10.0, 0.0, 1.0))
 func _freeze():
 	velocity.x = 0
 	velocity.z = 0
@@ -1085,9 +1099,6 @@ func _add_starting_items():
 		"sheriff_hat",
 		"sombrero",
 		"wizard_hat",
-		"sword",
-		"sword_big",
-		"axe",
 		"water_gun",
 		"chicken_leg",
 		"bone",
