@@ -2,6 +2,7 @@ extends Node
 
 signal player_connected(peer_id, player_info)
 signal server_disconnected
+signal connection_failed
 signal lan_servers_changed(servers: Array)
 
 const SERVER_ADDRESS: String = "127.0.0.1"
@@ -124,6 +125,7 @@ func _on_player_disconnected(id):
 
 func _on_connection_failed():
 	_finish_session()
+	connection_failed.emit()
 
 
 func _on_server_disconnected():

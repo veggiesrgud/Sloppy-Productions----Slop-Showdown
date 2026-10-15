@@ -49,6 +49,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = -17.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0901961, 0.0901961, 0.0901961, 1)
@@ -146,30 +147,29 @@ layout_mode = 2
 theme_override_constants/separation = 30
 theme_override_styles/separator = SubResource("StyleBoxLine_npnbc")
 
-[node name="ServerSection" type="VBoxContainer" parent="MainContainer/MainMenu" unique_id=7712408463]
+[node name="ServerSection" type="VBoxContainer" parent="MainContainer/MainMenu" unique_id=-877526129]
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="ServerLabel" type="Label" parent="MainContainer/MainMenu/ServerSection" unique_id=7712408464]
+[node name="ServerLabel" type="Label" parent="MainContainer/MainMenu/ServerSection" unique_id=-877526128]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "Active Servers:"
 horizontal_alignment = 1
 
-[node name="ServerList" type="ItemList" parent="MainContainer/MainMenu/ServerSection" unique_id=7712408465]
+[node name="ServerList" type="ItemList" parent="MainContainer/MainMenu/ServerSection" unique_id=-877526127]
 custom_minimum_size = Vector2(500, 140)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
-select_mode = 0
 
-[node name="ServerButtons" type="HBoxContainer" parent="MainContainer/MainMenu/ServerSection" unique_id=7712408466]
+[node name="ServerButtons" type="HBoxContainer" parent="MainContainer/MainMenu/ServerSection" unique_id=-877526126]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="Refresh" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=7712408467]
+[node name="Refresh" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=-877526125]
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 24
@@ -180,7 +180,7 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
 text = "REFRESH"
 flat = true
 
-[node name="Add" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=7712408468]
+[node name="Add" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=-877526124]
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 24
@@ -191,7 +191,7 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
 text = "+ ADD IP"
 flat = true
 
-[node name="Remove" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=7712408469]
+[node name="Remove" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=-877526123]
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 24
@@ -249,10 +249,17 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
 text = "QUIT"
 flat = true
 
-[connection signal="pressed" from="MainContainer/MainMenu/Buttons/Host" to="." method="_on_host_pressed"]
-[connection signal="pressed" from="MainContainer/MainMenu/Buttons/Join" to="." method="_on_join_pressed"]
-[connection signal="pressed" from="MainContainer/MainMenu/Option4/Quit" to="." method="_on_quit_pressed"]
+[node name="StatusLabel" type="Label" parent="MainContainer/MainMenu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.3, 1)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+text = ""
+
+[connection signal="item_selected" from="MainContainer/MainMenu/ServerSection/ServerList" to="." method="_on_server_selected"]
 [connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Refresh" to="." method="_on_refresh_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Add" to="." method="_on_add_server_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Remove" to="." method="_on_remove_server_pressed"]
-[connection signal="item_selected" from="MainContainer/MainMenu/ServerSection/ServerList" to="." method="_on_server_selected"]
+[connection signal="pressed" from="MainContainer/MainMenu/Buttons/Host" to="." method="_on_host_pressed"]
+[connection signal="pressed" from="MainContainer/MainMenu/Buttons/Join" to="." method="_on_join_pressed"]
+[connection signal="pressed" from="MainContainer/MainMenu/Option4/Quit" to="." method="_on_quit_pressed"]

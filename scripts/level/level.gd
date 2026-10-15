@@ -14,6 +14,7 @@ var _player_nickname_heights: Dictionary = {}
 var _nickname_heights_requested := false
 var _nickname_height_requesters: Dictionary = {}
 var _last_local_health := 100
+var _join_deadline_msec := 0
 
 @onready var players_container: Node3D = $PlayersContainer
 @onready var main_menu: MainMenuUI = $MainMenuUI
@@ -51,6 +52,7 @@ func _ready():
 		multiplayer_chat.message_sent.connect(_on_chat_message_sent)
 
 	Network.server_disconnected.connect(_on_server_disconnected)
+	Network.connection_failed.connect(_on_connection_failed)
 	Network.connect("player_connected", Callable(self, "_on_player_connected"))
 	Network.connect("lan_servers_changed", Callable(self, "_on_lan_servers_changed"))
 	multiplayer.peer_disconnected.connect(_remove_player)
@@ -60,6 +62,11 @@ func _ready():
 
 
 func _process(_delta: float) -> void:
+	if _join_deadline_msec > 0 and Time.get_ticks_msec() >= _join_deadline_msec:
+		_join_deadline_msec = 0
+		if _get_local_player() == null:
+			Network.leave_game()
+			main_menu.set_status("Server not available")
 	var can_show_player_list := (
 		not main_menu.is_menu_visible() and not pause_menu.is_menu_visible() and multiplayer.has_multiplayer_peer()
 	)
@@ -115,6 +122,9 @@ func after_ready():
 
 func _on_server_disconnected():
 	_reset_session_ui()
+func _on_connection_failed() -> void:
+	_join_deadline_msec = 0
+	main_menu.set_status("Server not available")
 
 
 func _reset_session_ui() -> void:
@@ -140,6 +150,7 @@ func _reset_session_ui() -> void:
 	if hotbar_ui:
 		hotbar_ui.set_player(null)
 	_hide_pause_menu(false)
+	main_menu.set_status("")
 	main_menu.show_menu()
 	Network.start_lan_discovery()
 	_refresh_server_list()
@@ -151,6 +162,8 @@ func _reset_session_ui() -> void:
 func _on_player_connected(peer_id, player_info):
 	var player = _add_player(peer_id, player_info)
 	if peer_id == multiplayer.get_unique_id() and player:
+		_join_deadline_msec = 0
+		main_menu.set_status("")
 		main_menu.hide_menu()
 		_update_mouse_mode()
 	if multiplayer.is_server() and player:
@@ -178,10 +191,13 @@ func _on_join_pressed(nickname: String, skin: String, address: String):
 	var error = Network.join_game(nickname, skin, address)
 	if error:
 		push_warning("Failed to join game. Error: " + str(error))
+		main_menu.set_status("Server not available")
 		main_menu.show_menu()
 		_update_mouse_mode()
 		return
 	Network.stop_lan_discovery()
+	main_menu.set_status("Connecting...")
+	_join_deadline_msec = Time.get_ticks_msec() + 8000
 
 
 func _on_refresh_servers_pressed() -> void:

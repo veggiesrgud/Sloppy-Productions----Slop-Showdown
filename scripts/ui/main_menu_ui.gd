@@ -13,6 +13,7 @@ const SAFE_AREA_MARGIN := 24.0
 @onready var address_input: LineEdit = $MainContainer/MainMenu/Option3/AddressInput
 @onready var main_container: VBoxContainer = $MainContainer
 @onready var server_list: ItemList = $MainContainer/MainMenu/ServerSection/ServerList
+@onready var status_label: Label = $MainContainer/MainMenu/StatusLabel
 var _server_entries: Array = []
 func _ready() -> void:
 	skin_input.clear()
@@ -105,3 +106,6 @@ func _update_responsive_layout() -> void:
 	main_container.scale = Vector2.ONE * scale_factor
 func get_skin() -> String:
 	return skin_input.get_item_text(skin_input.selected).to_lower()
+func set_status(text: String) -> void:
+	if status_label:
+		status_label.text = text
