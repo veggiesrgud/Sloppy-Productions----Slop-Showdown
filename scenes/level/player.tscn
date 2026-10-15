@@ -5118,7 +5118,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 spring_length = 5.0
 
 [node name="Camera3D" type="Camera3D" parent="SpringArmOffset/SpringArm3D" unique_id=1087327110]
-current = true
+current = false
 near = 0.01
 
 [node name="FirstPersonHUD" type="CanvasLayer" parent="." unique_id=1104668221]

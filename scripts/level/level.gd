@@ -81,6 +81,8 @@ func _watchdog_local_player() -> void:
 	var local := _get_local_player()
 	if local == null:
 		var me := multiplayer.get_unique_id()
+		if me <= 0:
+			return
 		push_warning("Local player missing after join, respawning id " + str(me))
 		_add_player(me, Network.players.get(me, {}))
 		return
@@ -148,6 +150,9 @@ func _reset_session_ui() -> void:
 
 func _on_player_connected(peer_id, player_info):
 	var player = _add_player(peer_id, player_info)
+	if peer_id == multiplayer.get_unique_id() and player:
+		main_menu.hide_menu()
+		_update_mouse_mode()
 	if multiplayer.is_server() and player:
 		player.call_deferred("_sync_inventory_to_owner")
 	if multiplayer.is_server():
@@ -167,8 +172,6 @@ func _on_host_pressed(nickname: String, skin: String):
 		_update_mouse_mode()
 		return
 	Network.stop_lan_discovery()
-	main_menu.hide_menu()
-	_update_mouse_mode()
 
 
 func _on_join_pressed(nickname: String, skin: String, address: String):
@@ -179,8 +182,6 @@ func _on_join_pressed(nickname: String, skin: String, address: String):
 		_update_mouse_mode()
 		return
 	Network.stop_lan_discovery()
-	main_menu.hide_menu()
-	_update_mouse_mode()
 
 
 func _on_refresh_servers_pressed() -> void:

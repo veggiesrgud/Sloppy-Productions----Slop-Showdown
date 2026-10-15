@@ -117,5 +117,5 @@ func _process(delta):
 		await get_tree().create_timer(0.1).timeout
 		if is_inside_tree():
 			get_tree().change_scene_to_file(next_scene)
-func _input(event):
+func _input(_event):
 	pass

@@ -659,7 +659,7 @@ func _freeze():
 	_request_animation(&"Idle")
 func _move() -> void:
 	var input_direction: Vector2 = Vector2.ZERO
-	if str(name) == "Player" or is_multiplayer_authority() or not multiplayer.has_multiplayer_peer():
+	if str(name) == "Player" or not multiplayer.has_multiplayer_peer() or is_multiplayer_authority():
 		input_direction = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var direction: Vector3
 	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
