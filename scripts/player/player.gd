@@ -88,6 +88,7 @@ var _server_pickup_animation_started_msec := -1
 var _last_server_pickup_request_msec := -PICKUP_REQUEST_COOLDOWN_MSEC
 var _pickup_area_camera_yaw_offset := 0.0
 var _equipped_hat_visual_id := ""
+var _last_inventory_ask_msec := 0
 var _SLOPPYSLIMYSHOWDOWN_scale := Vector3.ONE
 var _SLOPPYSLIMYSHOWDOWN_base := Vector3.ONE
 var _SLOPPYSLIMYSHOWDOWN_rest_pos := Vector3.ZERO
@@ -624,6 +625,7 @@ func _process(_delta):
 		pass
 	elif not is_multiplayer_authority():
 		return
+	_ask_for_inventory_if_empty()
 	var first_person := _spring_arm_offset != null and _spring_arm_offset.is_first_person
 	if first_person:
 		_align_pickup_area_with_camera()
@@ -873,7 +875,7 @@ func request_remove_item(item_id: String, quantity: int = 1):
 	var removed = player_inventory.remove_item(item_id, quantity)
 	if removed > 0:
 		_sync_inventory_to_owner()
-@rpc("authority", "call_local", "reliable")
+@rpc("any_peer", "call_local", "reliable")
 func add_world_item(scene_path: String, player_position: Vector3) -> void:
 	var item_container = get_node_or_null("/root/Level/Environment/ItemContainer")
 	if not item_container:
@@ -902,6 +904,38 @@ func _sync_inventory_to_owner() -> void:
 		sync_inventory_to_owner(player_inventory.to_dict())
 	else:
 		sync_inventory_to_owner.rpc_id(owner_id, player_inventory.to_dict())
+
+
+func _ask_for_inventory_if_empty() -> void:
+	if not multiplayer.has_multiplayer_peer() or multiplayer.is_server():
+		return
+	if not _inventory_is_empty():
+		return
+	var now := Time.get_ticks_msec()
+	if now - _last_inventory_ask_msec < 5000:
+		return
+	_last_inventory_ask_msec = now
+	request_inventory_resync.rpc_id(1)
+
+
+func _inventory_is_empty() -> bool:
+	if player_inventory == null:
+		return true
+	for i in range(player_inventory.slots.size()):
+		var slot := player_inventory.get_slot(i)
+		if slot != null and not slot.is_empty():
+			return false
+	return true
+
+
+@rpc("any_peer", "call_local", "reliable")
+func request_inventory_resync() -> void:
+	if not multiplayer.is_server() or not _is_owner_request():
+		return
+	if not player_inventory:
+		return
+	_sync_inventory_to_owner()
+	_sync_equipment_appearance()
 @rpc("any_peer", "call_local", "reliable")
 func request_equip_item(from_slot: int, item_type: Item.ItemType) -> void:
 	if not multiplayer.is_server() or not _is_owner_request():

@@ -68,6 +68,27 @@ func _process(_delta: float) -> void:
 			_show_player_list()
 	elif player_list_visible:
 		_hide_player_list()
+	_watchdog_local_player()
+
+
+func _watchdog_local_player() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	if not multiplayer.has_multiplayer_peer():
+		return
+	if main_menu.is_menu_visible() or pause_menu.is_menu_visible():
+		return
+	var local := _get_local_player()
+	if local == null:
+		var me := multiplayer.get_unique_id()
+		push_warning("Local player missing after join, respawning id " + str(me))
+		_add_player(me, Network.players.get(me, {}))
+		return
+	if get_viewport().get_camera_3d() == null:
+		var player_cam := local.get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
+		if player_cam:
+			push_warning("No current camera, forcing local player camera")
+			player_cam.current = true
 
 
 func after_ready():
@@ -321,7 +342,7 @@ func _broadcast_chat_message(sender_id: int, message_text: String):
 	show_chat_message.rpc(nick, message_text)
 
 
-@rpc("authority", "call_local", "reliable")
+@rpc("any_peer", "call_local", "reliable")
 func show_chat_message(nick: String, msg: String):
 	multiplayer_chat.add_message(nick, msg)
 
@@ -379,7 +400,7 @@ func register_player_nickname_height(player_id: int, height: float) -> void:
 	sync_player_nickname_height.rpc(player_id, normalized_height)
 
 
-@rpc("authority", "reliable")
+@rpc("any_peer", "reliable")
 func sync_player_nickname_height(player_id: int, height: float) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return

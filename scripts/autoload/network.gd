@@ -162,7 +162,7 @@ func skin_str_to_e(s):
 			return Character.SkinColor.BLUE
 
 
-@rpc("authority", "reliable")
+@rpc("any_peer", "reliable")
 func _sync_registered_player(peer_id: int, registered_player_info: Dictionary):
 	if multiplayer.is_server():
 		return
