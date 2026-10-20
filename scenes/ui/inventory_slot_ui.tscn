@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://bglwdpf2mf7g0"]
+[gd_scene format=3 uid="uid://bglwdpf2mf7g0"]
 
 [ext_resource type="Script" uid="uid://bi0mlil0a0e5i" path="res://scripts/ui/inventory_slot_ui.gd" id="1_5k8m7"]
 
@@ -57,7 +57,6 @@ offset_left = -20.0
 offset_top = -20.0
 grow_horizontal = 0
 grow_vertical = 0
-mouse_filter = 2
 theme_override_font_sizes/font_size = 14
 text = "99"
 horizontal_alignment = 2

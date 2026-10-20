@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu_ui.tscn" id="8_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/player_list_ui.tscn" id="9_player_list"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hotbar_ui.tscn" id="10_hotbar"]
+[ext_resource type="AudioStream" uid="uid://bw5xn1uxh5o28" path="res://sounds/InGame_Music.ogg" id="10_tf2q7"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
 sky_top_color = Color(0.22, 0.46, 0.72, 1)
@@ -118,3 +119,6 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 0.9)
 theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 40
 text = "100%"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=251476768]
+stream = ExtResource("10_tf2q7")

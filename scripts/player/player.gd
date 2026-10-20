@@ -30,7 +30,7 @@ const HAT_NODES_BY_ITEM := {
 	"sombrero": "Sombrero",
 	"wizard_hat": "WizardHat"
 }
-const WEAPON_NODES_BY_ITEM := {"water_gun": "WaterGun"}
+const WEAPON_NODES_BY_ITEM := {"water_gun": "WaterGun", "bazooka": "Bazooka"}
 const DROPLET_SCENE: PackedScene = preload("res://objects/droplet.tscn")
 const WATER_WEAPON_ID := "water_gun"
 const MELEE_DAMAGE := 25.0
@@ -41,6 +41,10 @@ const PLAYER_SEPARATION_DISTANCE := 0.9
 const PLAYER_SEPARATION_HEIGHT := 1.5
 const WATER_DAMAGE := 25.0
 const WATER_SPEED := 22.0
+const BAZOOKA_WEAPON_ID := "bazooka"
+const BAZOOKA_DROPLET_SCENE := preload("res://objects/big_droplet.tscn")
+const BAZOOKA_DAMAGE := 50.0
+const BAZOOKA_SPEED := 26.0
 const BACKPACK_NODES_BY_ITEM := {"backpack": "Backpack"}
 const HOLD_GUN_ARM_POSES := {
 	&"upper_arm.L": Quaternion(-0.29569894, 0.6573955, -0.36813626, 0.5872554),
@@ -392,7 +396,7 @@ func _get_body_animation() -> StringName:
 func _start_attack() -> void:
 	if is_attacking or is_collecting:
 		return
-	if _equipped_weapon_id() == WATER_WEAPON_ID:
+	if _equipped_weapon_id() == WATER_WEAPON_ID or _equipped_weapon_id() == BAZOOKA_WEAPON_ID:
 		_shoot_water_gun()
 		_kick_held_weapon()
 	else:
@@ -405,7 +409,7 @@ func _start_attack() -> void:
 func _on_animation_finished(animation_name: StringName) -> void:
 	match animation_name:
 		&"Attack1":
-			if _equipped_weapon_id() != WATER_WEAPON_ID:
+			if _equipped_weapon_id() != WATER_WEAPON_ID and _equipped_weapon_id() != BAZOOKA_WEAPON_ID:
 				_perform_melee_attack()
 			is_attacking = false
 		&"Emote2":
@@ -464,7 +468,14 @@ func _shoot_water_gun() -> void:
 	var dir := -cam.global_transform.basis.z.normalized()
 	var muzzle := _get_water_gun_muzzle(dir)
 	var shot_dir := _aim_at_crosshair(cam, dir, muzzle)
-	_spawn_droplet(muzzle, shot_dir)
+	var droplet_scene := DROPLET_SCENE
+	var p_speed := WATER_SPEED
+	var p_damage := WATER_DAMAGE
+	if _equipped_weapon_id() == BAZOOKA_WEAPON_ID:
+		droplet_scene = BAZOOKA_DROPLET_SCENE
+		p_speed = BAZOOKA_SPEED
+		p_damage = BAZOOKA_DAMAGE
+	_spawn_droplet(muzzle, shot_dir, droplet_scene, p_speed, p_damage)
 func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	var aim_point := cam.global_position + dir * 60.0
 	var space := get_world_3d().direct_space_state
@@ -477,12 +488,12 @@ func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	if to_aim.length() > 0.05:
 		return to_aim.normalized()
 	return dir
-func _spawn_droplet(muzzle: Vector3, shot_dir: Vector3) -> void:
-	var droplet = DROPLET_SCENE.instantiate()
+func _spawn_droplet(muzzle: Vector3, shot_dir: Vector3, droplet_scene: PackedScene = null, p_speed: float = WATER_SPEED, p_damage: float = WATER_DAMAGE) -> void:
+	var droplet = (droplet_scene if droplet_scene else DROPLET_SCENE).instantiate()
 	if droplet.has_method("setup"):
-		droplet.setup(shot_dir, WATER_SPEED, WATER_DAMAGE, multiplayer.get_unique_id())
+		droplet.setup(shot_dir, p_speed, p_damage, multiplayer.get_unique_id())
 	else:
-		droplet.set("velocity", shot_dir * WATER_SPEED)
+		droplet.set("velocity", shot_dir * p_speed)
 	var world = get_tree().current_scene
 	if world:
 		world.add_child(droplet)
@@ -1134,6 +1145,7 @@ func _add_starting_items():
 		"sombrero",
 		"wizard_hat",
 		"water_gun",
+		"bazooka",
 		"chicken_leg",
 		"bone",
 		"chalice"
@@ -1144,7 +1156,7 @@ func _add_starting_items():
 			player_inventory.add_item(item, 1)
 	for i in player_inventory.slots.size():
 		var slot = player_inventory.slots[i]
-		if slot and slot.item_id == WATER_WEAPON_ID:
+		if slot and slot.item_id == BAZOOKA_WEAPON_ID:
 			player_inventory.wielded_weapon_slot = i
 			break
 	_sync_equipment_appearance()

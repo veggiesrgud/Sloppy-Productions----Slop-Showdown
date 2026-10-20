@@ -81,6 +81,16 @@ func _create_sample_items():
 		110
 	)
 	_create_item(
+		"bazooka",
+		"Bazooka",
+		"Fires a big splashing water blast.",
+		Item.ItemType.WEAPON,
+		"res://scenes/items/weapons/bazooka.tscn",
+		WATERGUN_ICON,
+		true,
+		200
+	)
+	_create_item(
 		"chicken_leg",
 		"Chicken Leg",
 		"A cooked chicken leg.",
