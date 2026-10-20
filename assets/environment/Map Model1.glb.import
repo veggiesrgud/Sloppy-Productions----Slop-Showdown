@@ -11,6 +11,8 @@ path="res://.godot/imported/Map Model1.glb-b29b4c9ed9a309f0280e08d4bf3519fe.scn"
 source_file="res://assets/environment/Map Model1.glb"
 dest_files=["res://.godot/imported/Map Model1.glb-b29b4c9ed9a309f0280e08d4bf3519fe.scn"]
 
+[params]
+
 nodes/root_type=""
 nodes/root_name=""
 nodes/root_script=null
