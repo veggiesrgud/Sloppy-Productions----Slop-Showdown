@@ -8,6 +8,10 @@ var time_alive: float = 0.0
 var is_enemy_shot: bool = false
 var shooter_id: int = 0
 var bounces: int = 0
+@export var is_bazooka := false
+@export var splash_damage := 35.0
+@export var splash_radius := 8.0
+@export var knockback_force := 25.0
 const MAX_BOUNCES: int = 2
 const BOUNCE_KEEP: float = 0.65
 func _ready():
@@ -53,6 +57,9 @@ func _bounce(normal: Vector3, at: Vector3) -> void:
 		velocity = velocity.normalized() * 3.0
 	spawn_impact()
 func _on_body_entered(body):
+	if is_bazooka:
+		_apply_bazooka_hit(body)
+		return
 	if is_enemy_shot:
 		if body.is_in_group("player") or body.name == "Player":
 			if multiplayer.has_multiplayer_peer() and not body.is_multiplayer_authority():
@@ -86,6 +93,33 @@ func _on_body_entered(body):
 			body.damage(damage)
 		spawn_impact()
 		queue_free()
+
+func _apply_bazooka_hit(hit_body):
+	var impact_pos := global_position
+	var my_id := shooter_id
+	if (hit_body.is_in_group("player") or hit_body.name == "Player") and hit_body is Node3D:
+		if multiplayer.has_multiplayer_peer() and hit_body.get_multiplayer_authority() == my_id:
+			pass
+		elif hit_body.has_method("take_pvp_hit"):
+			var body_3d := hit_body as Node3D
+			var dir := (body_3d.global_position - impact_pos).normalized()
+			body_3d.take_pvp_hit.rpc(damage, my_id, dir, knockback_force)
+	for player in get_tree().get_nodes_in_group("player"):
+		if player == hit_body:
+			continue
+		if not (player is Node3D):
+			continue
+		var player_3d := player as Node3D
+		var dist := impact_pos.distance_to(player_3d.global_position)
+		if dist > splash_radius:
+			continue
+		if multiplayer.has_multiplayer_peer() and player.get_multiplayer_authority() == my_id:
+			continue
+		if player.has_method("take_pvp_hit"):
+			var dir := (player_3d.global_position - impact_pos).normalized()
+			player_3d.take_pvp_hit.rpc(splash_damage, my_id, dir, knockback_force)
+	spawn_impact()
+	queue_free()
 func _on_area_entered(area):
 	if area == self:
 		return

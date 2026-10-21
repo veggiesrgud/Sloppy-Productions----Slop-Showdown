@@ -43,7 +43,7 @@ const WATER_DAMAGE := 25.0
 const WATER_SPEED := 22.0
 const BAZOOKA_WEAPON_ID := "bazooka"
 const BAZOOKA_DROPLET_SCENE := preload("res://objects/big_droplet.tscn")
-const BAZOOKA_DAMAGE := 50.0
+const BAZOOKA_DAMAGE := 100.0
 const BAZOOKA_SPEED := 26.0
 const BACKPACK_NODES_BY_ITEM := {"backpack": "Backpack"}
 const HOLD_GUN_ARM_POSES := {
@@ -80,6 +80,17 @@ var is_collecting := false
 var shift_locked := true
 signal health_updated(health)
 var health: int = 100
+var water_gun_ammo := 6
+var water_gun_reserve := 999
+var bazooka_ammo := 1
+var bazooka_reserve := 999
+var water_gun_reload_timer := 0.0
+var bazooka_reload_timer := 0.0
+var _weapon_rest_position: Dictionary = {}
+var _weapon_rest_rotation: Dictionary = {}
+var _empty_click_count := 0
+var _reload_prompt_timer := 0.0
+var _r_pressed := false
 var _current_speed: float
 var _spawn_point = Vector3(0, 5, 0)
 var _animation_sequence := 0
@@ -112,6 +123,9 @@ var _rig_active := false
 @onready var _limbs_head_mesh: MeshInstance3D = get_node("GodotRobot3D/RobotArmature/Skeleton3D/LimbsAndHead")
 @onready var _skeleton: Skeleton3D = get_node("GodotRobot3D/RobotArmature/Skeleton3D")
 @onready var _pickup_area: Area3D = $GodotRobot3D/InfrontArea3D
+@onready var _reload_line: ColorRect = $FirstPersonHUD/ReloadLine
+@onready var _ammo_label: Label = get_node("/root/Level/HUD/AmmoLabel")
+@onready var _reload_prompt: Label = get_node("/root/Level/HUD/ReloadPrompt")
 @onready var _first_person_hud: CanvasLayer = $FirstPersonHUD
 func _enter_tree():
 	if str(name) == "Player":
@@ -147,11 +161,15 @@ func _play_death_sound() -> void:
 	if audio and audio.has_method("play"):
 		audio.play("sounds/enemy_destroy.ogg")
 @rpc("any_peer", "call_local", "reliable")
-func take_pvp_hit(amount: float, attacker_id: int) -> void:
+func take_pvp_hit(amount: float, attacker_id: int, knockback_dir: Vector3 = Vector3.ZERO, knockback_force: float = 0.0) -> void:
 	if attacker_id == get_multiplayer_authority():
 		return
 	if amount <= 0.0 or amount > 100.0:
 		return
+	if knockback_force > 0.0 and knockback_dir != Vector3.ZERO:
+		var kb := knockback_dir.normalized() * knockback_force
+		kb.y = absf(kb.y) + knockback_force * 0.6
+		velocity = kb
 	damage(amount)
 func _ready():
 	add_to_group("player")
@@ -316,7 +334,31 @@ func _align_pickup_area_with_camera() -> void:
 	var pickup_rotation := _pickup_area.global_rotation
 	pickup_rotation.y = wrapf(_spring_arm_offset.global_rotation.y + _pickup_area_camera_yaw_offset, -PI, PI)
 	_pickup_area.global_rotation = pickup_rotation
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_R:
+		var weapon_id := _equipped_weapon_id()
+		if get_ammo(weapon_id) <= 0 and not is_reloading(weapon_id):
+			start_reload(weapon_id)
+			_reload_prompt.text = ""
+			_reload_prompt_timer = 0.0
+			_empty_click_count = 0
+
+
 func _physics_process(delta):
+	if water_gun_reload_timer > 0:
+		water_gun_reload_timer -= delta
+		if water_gun_reload_timer <= 0:
+			var needed := 6 - water_gun_ammo
+			var refill := minf(needed, water_gun_reserve)
+			water_gun_ammo += refill
+			water_gun_reserve -= refill
+	if bazooka_reload_timer > 0:
+		bazooka_reload_timer -= delta
+		if bazooka_reload_timer <= 0:
+			var needed := 1 - bazooka_ammo
+			var refill := minf(needed, bazooka_reserve)
+			bazooka_ammo += refill
+			bazooka_reserve -= refill
 	if str(name) == "Player":
 		pass
 	elif multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
@@ -359,6 +401,14 @@ func _physics_process(delta):
 		_request_animation(&"Emote2", true)
 		return
 	if Input.is_action_just_pressed("attack"):
+		var weapon_id := _equipped_weapon_id()
+		if get_ammo(weapon_id) <= 0 and not is_reloading(weapon_id):
+			_empty_click_count += 1
+			if _empty_click_count >= 5:
+				_reload_prompt.text = "Press R to reload"
+				_reload_prompt_timer = 5.0
+			return
+		_empty_click_count = 0
 		_start_attack()
 		return
 	if is_on_floor():
@@ -397,7 +447,13 @@ func _start_attack() -> void:
 	if is_attacking or is_collecting:
 		return
 	if _equipped_weapon_id() == WATER_WEAPON_ID or _equipped_weapon_id() == BAZOOKA_WEAPON_ID:
+		var weapon_id := _equipped_weapon_id()
+		if is_reloading(weapon_id):
+			return
+		if get_ammo(weapon_id) <= 0:
+			return
 		_shoot_water_gun()
+		consume_ammo(weapon_id)
 		_kick_held_weapon()
 	else:
 		is_attacking = true
@@ -406,6 +462,36 @@ func _start_attack() -> void:
 		_perform_melee_attack()
 		await get_tree().create_timer(0.13).timeout
 		is_attacking = false
+
+func get_ammo(weapon_id: String) -> int:
+	if weapon_id == WATER_WEAPON_ID:
+		return water_gun_ammo
+	if weapon_id == BAZOOKA_WEAPON_ID:
+		return bazooka_ammo
+	return 0
+
+func consume_ammo(weapon_id: String) -> void:
+	if weapon_id == WATER_WEAPON_ID:
+		water_gun_ammo -= 1
+	elif weapon_id == BAZOOKA_WEAPON_ID:
+		bazooka_ammo -= 1
+
+func is_reloading(weapon_id: String) -> bool:
+	if weapon_id == WATER_WEAPON_ID:
+		return water_gun_reload_timer > 0
+	if weapon_id == BAZOOKA_WEAPON_ID:
+		return bazooka_reload_timer > 0
+	return false
+
+func start_reload(weapon_id: String) -> void:
+	if weapon_id == WATER_WEAPON_ID:
+		water_gun_reload_timer = 2.0
+	elif weapon_id == BAZOOKA_WEAPON_ID:
+		bazooka_reload_timer = 5.0
+	_reload_prompt.text = ""
+	_reload_prompt_timer = 0.0
+	_empty_click_count = 0
+
 func _on_animation_finished(animation_name: StringName) -> void:
 	match animation_name:
 		&"Attack1":
@@ -475,7 +561,7 @@ func _shoot_water_gun() -> void:
 		droplet_scene = BAZOOKA_DROPLET_SCENE
 		p_speed = BAZOOKA_SPEED
 		p_damage = BAZOOKA_DAMAGE
-	_spawn_droplet(muzzle, shot_dir, droplet_scene, p_speed, p_damage)
+	_spawn_droplet(muzzle, shot_dir, droplet_scene, p_speed, p_damage, _equipped_weapon_id() == BAZOOKA_WEAPON_ID)
 func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	var aim_point := cam.global_position + dir * 60.0
 	var space := get_world_3d().direct_space_state
@@ -488,12 +574,17 @@ func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	if to_aim.length() > 0.05:
 		return to_aim.normalized()
 	return dir
-func _spawn_droplet(muzzle: Vector3, shot_dir: Vector3, droplet_scene: PackedScene = null, p_speed: float = WATER_SPEED, p_damage: float = WATER_DAMAGE) -> void:
+func _spawn_droplet(muzzle: Vector3, shot_dir: Vector3, droplet_scene: PackedScene = null, p_speed: float = WATER_SPEED, p_damage: float = WATER_DAMAGE, is_bazooka: bool = false) -> void:
 	var droplet = (droplet_scene if droplet_scene else DROPLET_SCENE).instantiate()
 	if droplet.has_method("setup"):
 		droplet.setup(shot_dir, p_speed, p_damage, multiplayer.get_unique_id())
 	else:
 		droplet.set("velocity", shot_dir * p_speed)
+	if is_bazooka:
+		droplet.is_bazooka = true
+		droplet.splash_damage = 35.0
+		droplet.splash_radius = 8.0
+		droplet.knockback_force = 25.0
 	var world = get_tree().current_scene
 	if world:
 		world.add_child(droplet)
@@ -527,7 +618,9 @@ func _kick_held_weapon() -> void:
 	var weapon := get_node_or_null(HAND_EQUIPMENT_PATH + node_name) as Node3D
 	if weapon == null:
 		return
-	var rest_position := weapon.position
+	if not _weapon_rest_position.has(weapon_id):
+		_weapon_rest_position[weapon_id] = weapon.position
+	var rest_position := _weapon_rest_position[weapon_id] as Vector3
 	var kick := create_tween()
 	kick.tween_property(weapon, "position", rest_position + Vector3(0, -0.03, 0.08), 0.05)
 	kick.tween_property(weapon, "position", rest_position, 0.1)
@@ -537,7 +630,9 @@ func _swing_held_weapon() -> void:
 	var weapon := get_node_or_null(HAND_EQUIPMENT_PATH + node_name) as Node3D
 	if weapon == null:
 		return
-	var rest_rotation := weapon.rotation
+	if not _weapon_rest_rotation.has(weapon_id):
+		_weapon_rest_rotation[weapon_id] = weapon.rotation
+	var rest_rotation := _weapon_rest_rotation[weapon_id] as Vector3
 	var swing := create_tween()
 	swing.tween_property(weapon, "rotation", rest_rotation + Vector3(-0.9, 0.0, 0.4), 0.1)
 	swing.tween_property(weapon, "rotation", rest_rotation, 0.15)
@@ -650,7 +745,35 @@ func _process(_delta):
 	_check_out_of_bounds()
 	_update_SLOPPYSLIMYSHOWDOWN_squash()
 	_apply_aim_zoom(_delta)
-
+	_reload_line.visible = false
+	var reload_timer := 0.0
+	var reload_total := 0.0
+	if water_gun_reload_timer > 0:
+		reload_timer = water_gun_reload_timer
+		reload_total = 2.0
+	elif bazooka_reload_timer > 0:
+		reload_timer = bazooka_reload_timer
+		reload_total = 5.0
+	if reload_total > 0:
+		var progress := 1.0 - reload_timer / reload_total
+		_reload_line.visible = true
+		_reload_line.offset_right = -40.0 + progress * 80.0
+	var weapon_id := _equipped_weapon_id()
+	var ammo_text := ""
+	if _reload_prompt_timer > 0:
+		_ammo_label.text = ""
+	else:
+		if weapon_id == WATER_WEAPON_ID:
+			ammo_text = str(water_gun_ammo) + " / 6   " + str(water_gun_reserve)
+		elif weapon_id == BAZOOKA_WEAPON_ID:
+			ammo_text = str(bazooka_ammo) + " / 1   " + str(bazooka_reserve)
+		_ammo_label.text = ammo_text
+	if _reload_prompt_timer > 0:
+		_reload_prompt_timer -= _delta
+		if _reload_prompt_timer <= 0:
+			_reload_prompt.text = ""
+	else:
+		_reload_prompt.text = ""
 
 func _apply_aim_zoom(delta: float) -> void:
 	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
@@ -1046,7 +1169,7 @@ func _set_equipment_visibility(weapon_id: String, hat_id: String, backpack_id: S
 		var water_gun := get_node_or_null(HAND_EQUIPMENT_PATH + "WaterGun") as Node3D
 		if water_gun:
 			water_gun.visible = true
-	_apply_hold_gun_pose(weapon_id == WATER_WEAPON_ID)
+	_apply_hold_gun_pose(weapon_id == WATER_WEAPON_ID or weapon_id == BAZOOKA_WEAPON_ID)
 func _apply_hold_gun_pose(enabled: bool) -> void:
 	if _skeleton == null:
 		return

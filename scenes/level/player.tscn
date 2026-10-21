@@ -5062,7 +5062,7 @@ transform = Transform3D(-0.12060307, -0.1226446, 0.57481605, 0.57955086, 0.07288
 visible = false
 
 [node name="Bazooka" parent="GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach" unique_id=352347372 instance=ExtResource("48_bazooka")]
-transform = Transform3D(-0.050362933, 0.22317898, 0.1642324, 0.05296834, -0.13644466, 0.2479833, 0.17856172, 0.10342228, -0.027239949, -0.24433577, 0.5528084, 0.51533973)
+transform = Transform3D(0.003993876, -0.17954575, -0.2298371, 0.18933259, 0.045094177, -0.03183352, 0.036927532, -0.21178322, 0.18807346, 0.038693905, 1.5949328, 0.7356997)
 
 [node name="BackAttach" type="BoneAttachment3D" parent="GodotRobot3D/RobotArmature/Skeleton3D" unique_id=1338054728]
 transform = Transform3D(1, 7.1054274e-15, -2.3841851e-07, 4.3943693e-09, 0.99983, 0.01843132, 2.3837802e-07, -0.018431328, 0.9998302, -2.2003666e-16, 1.2942743, 0.05275946)
@@ -5158,6 +5158,20 @@ offset_left = 5.0
 offset_top = 2.0
 offset_right = 7.0
 offset_bottom = 10.0
+mouse_filter = 2
+
+[node name="ReloadLine" type="ColorRect" parent="FirstPersonHUD" unique_id=-316289463]
+visible = false
+modulate = Color(0.15, 0.55, 1, 1)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = 22.0
+offset_right = -40.0
+offset_bottom = 26.0
 mouse_filter = 2
 
 [node name="PlayerNick" type="Node3D" parent="." unique_id=438524062]
