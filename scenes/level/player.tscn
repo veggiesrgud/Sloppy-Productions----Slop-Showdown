@@ -4822,7 +4822,7 @@ _character = NodePath("..")
 animation_player = NodePath("AnimationPlayer")
 
 [node name="FirstPersonCameraSource" type="Node3D" parent="GodotRobot3D" unique_id=1850216777]
-transform = Transform3D(0.5784721, 5.4123372e-15, -1.3791846e-07, 1.0866774e-09, 0.578454, 0.004557855, 1.3791423e-07, -0.0045578615, 0.5784541, 8.881784e-16, 0.996163, 0.017233532)
+transform = Transform3D(0.5784721, 5.4123372e-15, -1.3791846e-07, 1.0866774e-09, 0.578454, 0.004557855, 1.3791423e-07, -0.0045578615, 0.5784541, 1.2212453e-15, 1.0367339, 0.017233532)
 
 [node name="FirstPersonCameraAnchor" type="Node3D" parent="GodotRobot3D/FirstPersonCameraSource" unique_id=1061916657]
 transform = Transform3D(-1, -4.2919936e-08, 3.9609992e-07, -1.9330494e-07, 0.9215918, -0.38816008, -3.483829e-07, -0.38816008, -0.9215918, -2.6863398e-07, 1.2807279, -0.5394225)
@@ -5062,7 +5062,7 @@ transform = Transform3D(-0.12060307, -0.1226446, 0.57481605, 0.57955086, 0.07288
 visible = false
 
 [node name="Bazooka" parent="GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach" unique_id=352347372 instance=ExtResource("48_bazooka")]
-transform = Transform3D(0.003993876, -0.17954575, -0.2298371, 0.18933259, 0.045094177, -0.03183352, 0.036927532, -0.21178322, 0.18807346, 0.038693905, 1.5949328, 0.7356997)
+transform = Transform3D(0.028074943, -0.01123081, 0.29526132, 0.19082049, 0.009137498, -0.043089107, -0.0050841793, 0.28091398, 0.013205766, 0.58360547, 2.0906725, -0.51663136)
 
 [node name="BackAttach" type="BoneAttachment3D" parent="GodotRobot3D/RobotArmature/Skeleton3D" unique_id=1338054728]
 transform = Transform3D(1, 7.1054274e-15, -2.3841851e-07, 4.3943693e-09, 0.99983, 0.01843132, 2.3837802e-07, -0.018431328, 0.9998302, -2.2003666e-16, 1.2942743, 0.05275946)

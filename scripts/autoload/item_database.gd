@@ -1,5 +1,7 @@
+# item database - holds all items, weapons, hats, and their info
 extends Node
 
+# textures for item icons
 const FEDORA_ICON: Texture2D = preload("res://assets/items/hats/icons/fedora.png")
 const HEADPHONES_ICON: Texture2D = preload("res://assets/items/hats/icons/headphones.png")
 const PIRATE_HAT_ICON: Texture2D = preload("res://assets/items/hats/icons/pirate_hat.png")
@@ -12,17 +14,21 @@ const CHICKEN_LEG_ICON: Texture2D = preload("res://assets/items/misc/icons/chick
 const BONE_ICON: Texture2D = preload("res://assets/items/misc/icons/bone.png")
 const CHALICE_ICON: Texture2D = preload("res://assets/items/misc/icons/chalice.png")
 
+# list of all items in the game
 var items: Dictionary = {}
 
 
+# called when the game starts - creates all the items
 func _ready():
 	_create_sample_items()
 
 
+# get an item by its id
 func get_item(item_id: String) -> Item:
 	return items.get(item_id)
 
 
+# get all items
 func get_all_items() -> Dictionary:
 	return items
 

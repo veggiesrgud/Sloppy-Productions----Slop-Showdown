@@ -1,11 +1,12 @@
 extends Node3D
-
+# chat length and nickname stuff
 const MAX_CHAT_MESSAGE_LENGTH := 160
 const MIN_NICKNAME_HEIGHT := 2.0
 const MAX_NICKNAME_HEIGHT := 8.0
 
 @export var player_scene: PackedScene
 
+# make UIs not visable until key is pressed
 var chat_visible := false
 var inventory_visible := false
 var player_list_visible := false
@@ -120,13 +121,16 @@ func after_ready():
 	main_menu.address_input.text = ip_address
 
 
+# called when the server disconnects everyone
 func _on_server_disconnected():
 	_reset_session_ui()
+# called when joining a server fails
 func _on_connection_failed() -> void:
 	_join_deadline_msec = 0
 	main_menu.set_status("Server not available")
 
 
+# clears all players and items when leaving a game
 func _reset_session_ui() -> void:
 	for child in players_container.get_children():
 		child.queue_free()
@@ -159,6 +163,7 @@ func _reset_session_ui() -> void:
 	_update_mouse_mode()
 
 
+# called when another player joins the game
 func _on_player_connected(peer_id, player_info):
 	var player = _add_player(peer_id, player_info)
 	if peer_id == multiplayer.get_unique_id() and player:
@@ -177,6 +182,7 @@ func _on_player_connected(peer_id, player_info):
 	_refresh_player_list()
 
 
+# clicked host button - starts hosting a game
 func _on_host_pressed(nickname: String, skin: String):
 	var error = Network.start_host(nickname, skin)
 	if error:
@@ -187,6 +193,7 @@ func _on_host_pressed(nickname: String, skin: String):
 	Network.stop_lan_discovery()
 
 
+# clicked join button - tries to connect to another players game
 func _on_join_pressed(nickname: String, skin: String, address: String):
 	var error = Network.join_game(nickname, skin, address)
 	if error:
@@ -245,6 +252,7 @@ func _update_health_hud(health) -> void:
 		tween.tween_property(flash, "modulate:a", 0.0, 0.35)
 
 
+# spawn a player character in the game world
 func _add_player(id: int, player_info: Dictionary) -> Character:
 	if DisplayServer.get_name() == "headless" and id == 1:
 		return null

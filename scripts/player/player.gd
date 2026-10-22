@@ -1,10 +1,13 @@
+# player character - handles movement, shooting, ammo, reloading, and multiplayer sync
 class_name Character
 extends CharacterBody3D
 enum SkinColor { BLUE, YELLOW, GREEN, RED }
+# movement constants
 const NORMAL_SPEED = 6.0
 const SPRINT_SPEED = 10.0
 const JUMP_VELOCITY = 7.5
 const FALL_GRAVITY_MULTIPLIER = 1.6
+# nickname and animation constants
 const BASE_NICKNAME_HEIGHT := 2.0
 const SERVER_ANIMATION_REQUESTS_PER_SECOND := 10.0
 const SERVER_ANIMATION_REQUEST_BURST := 6.0
@@ -22,6 +25,7 @@ const ALLOWED_ANIMATION_STATES := {
 	&"holdinggun": true,
 	&"Emote2": true
 }
+# hat models for each item
 const HAT_NODES_BY_ITEM := {
 	"fedora": "Fedora",
 	"headphones": "Headphones",
@@ -30,30 +34,39 @@ const HAT_NODES_BY_ITEM := {
 	"sombrero": "Sombrero",
 	"wizard_hat": "WizardHat"
 }
+# weapon models attached to hand
 const WEAPON_NODES_BY_ITEM := {"water_gun": "WaterGun", "bazooka": "Bazooka"}
 const DROPLET_SCENE: PackedScene = preload("res://objects/droplet.tscn")
 const WATER_WEAPON_ID := "water_gun"
+# melee combat settings
 const MELEE_DAMAGE := 25.0
 const MELEE_RANGE := 3.2
 const MELEE_IMPACT_SCENE: PackedScene = preload("res://objects/impact.tscn")
 const MELEE_KNOCKBACK := 1.2
+# player spacing so they dont overlap too much
 const PLAYER_SEPARATION_DISTANCE := 0.9
 const PLAYER_SEPARATION_HEIGHT := 1.5
+# water gun stats
 const WATER_DAMAGE := 25.0
 const WATER_SPEED := 22.0
+# bazooka stats
 const BAZOOKA_WEAPON_ID := "bazooka"
 const BAZOOKA_DROPLET_SCENE := preload("res://objects/big_droplet.tscn")
 const BAZOOKA_DAMAGE := 100.0
 const BAZOOKA_SPEED := 26.0
 const BACKPACK_NODES_BY_ITEM := {"backpack": "Backpack"}
+# gun holding pose for skeleton bones
 const HOLD_GUN_ARM_POSES := {
 	&"upper_arm.L": Quaternion(-0.29569894, 0.6573955, -0.36813626, 0.5872554),
 	&"upper_arm.R": Quaternion(0.03442656, 0.029669516, 0.65629834, 0.7531315),
 }
+# body part attachment paths
 const HEAD_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach/"
 const HAND_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach/"
 const BACK_EQUIPMENT_PATH := "GodotRobot3D/RobotArmature/Skeleton3D/BackAttach/"
+# bones hidden in first person view
 const FIRST_PERSON_HIDDEN_BONES: Array[StringName] = [&"Head", &"HeadTop"]
+# colors for each skin
 const SKIN_TINTS := {
 	0: Color(0.25, 0.5, 0.95),
 	1: Color(0.95, 0.78, 0.2),
@@ -80,37 +93,54 @@ var is_collecting := false
 var shift_locked := true
 signal health_updated(health)
 var health: int = 100
+# ammo counts - current bullets in mag and reserve backup ammo
 var water_gun_ammo := 6
 var water_gun_reserve := 999
 var bazooka_ammo := 1
 var bazooka_reserve := 999
+# reload timers counting down
 var water_gun_reload_timer := 0.0
 var bazooka_reload_timer := 0.0
-var _weapon_rest_position: Dictionary = {}
-var _weapon_rest_rotation: Dictionary = {}
+# stores each weapons rest position so recoil goes back to the right spot
+var gun_rest_pos: Dictionary = {}
+var gun_rest_rot: Dictionary = {}
+# counts how many times you clicked with no ammo before showing reload message
 var _empty_click_count := 0
+# timer for showing the "press r to reload" message
 var _reload_prompt_timer := 0.0
+# tracks if R key is held down
 var _r_pressed := false
+# current movement speed
 var _current_speed: float
+# where the player spawns
 var _spawn_point = Vector3(0, 5, 0)
+# animation tracking
 var _animation_sequence := 0
 var _last_applied_animation_sequence := 0
 var _last_requested_animation: StringName = &""
-var _appearance_sync_requesters: Dictionary = {}
-var _server_animation_request_tokens := SERVER_ANIMATION_REQUEST_BURST
+# who requested appearance changes
+var appearance_requesters: Dictionary = {}
+# animation rate limiting on server
+var anim_tokens := SERVER_ANIMATION_REQUEST_BURST
 var _last_server_animation_token_update_msec := 0
+# pickup timing
 var _server_pickup_animation_started_msec := -1
 var _last_server_pickup_request_msec := -PICKUP_REQUEST_COOLDOWN_MSEC
+# camera pickup area rotation
 var _pickup_area_camera_yaw_offset := 0.0
+# what hat is currently shown
 var _equipped_hat_visual_id := ""
+# inventory request timing
 var _last_inventory_ask_msec := 0
-var _SLOPPYSLIMYSHOWDOWN_scale := Vector3.ONE
-var _SLOPPYSLIMYSHOWDOWN_base := Vector3.ONE
-var _SLOPPYSLIMYSHOWDOWN_rest_pos := Vector3.ZERO
-var _SLOPPYSLIMYSHOWDOWN_rock := 0.0
-var _SLOPPYSLIMYSHOWDOWN_hop := 0.0
-var _SLOPPYSLIMYSHOWDOWN_air_time := 0.0
-var _SLOPPYSLIMYSHOWDOWN_squash_time := 0.0
+# squishy stretchy body animation variables
+var body_scale := Vector3.ONE
+var body_base := Vector3.ONE
+var body_rest_pos := Vector3.ZERO
+var body_rock := 0.0
+var body_hop := 0.0
+var body_air_time := 0.0
+var body_squish_time := 0.0
+# skeleton and rig references
 var _squash_node: Node3D
 var _rig_root: Node3D
 var _rig_skeleton: Skeleton3D
@@ -161,6 +191,7 @@ func _play_death_sound() -> void:
 	if audio and audio.has_method("play"):
 		audio.play("sounds/enemy_destroy.ogg")
 @rpc("any_peer", "call_local", "reliable")
+# when this player gets hit by another player - applies damage and knockback
 func take_pvp_hit(amount: float, attacker_id: int, knockback_dir: Vector3 = Vector3.ZERO, knockback_force: float = 0.0) -> void:
 	if attacker_id == get_multiplayer_authority():
 		return
@@ -171,10 +202,11 @@ func take_pvp_hit(amount: float, attacker_id: int, knockback_dir: Vector3 = Vect
 		kb.y = absf(kb.y) + knockback_force * 0.6
 		velocity = kb
 	damage(amount)
+# called when the player spawns - sets up inventory, skin, camera, and multiplayer
 func _ready():
 	add_to_group("player")
 	_ensure_shift_lock_action()
-	_setup_SLOPPYSLIMYSHOWDOWN_rig()
+	setup_body_rig()
 	if not multiplayer.has_multiplayer_peer():
 		player_inventory = PlayerInventory.new()
 		_add_starting_items()
@@ -232,7 +264,7 @@ func _on_camera_perspective_changed(first_person: bool) -> void:
 	else:
 		_pickup_area.rotation = Vector3.ZERO
 		call_deferred("_refresh_nickname_height_after_perspective_change")
-func _setup_SLOPPYSLIMYSHOWDOWN_rig() -> void:
+func setup_body_rig() -> void:
 	_rig_skeleton = _find_rig_skeleton()
 	if _rig_skeleton == null:
 		_rig_root = null
@@ -250,9 +282,9 @@ func _setup_SLOPPYSLIMYSHOWDOWN_rig() -> void:
 		return
 	_rig_active = true
 	_squash_node = _rig_root
-	_SLOPPYSLIMYSHOWDOWN_base = _rig_root.scale
-	_SLOPPYSLIMYSHOWDOWN_rest_pos = _rig_root.position
-	_SLOPPYSLIMYSHOWDOWN_scale = _SLOPPYSLIMYSHOWDOWN_base
+	body_base = _rig_root.scale
+	body_rest_pos = _rig_root.position
+	body_scale = body_base
 	if not _skeleton.skeleton_updated.is_connected(_on_skeleton_updated):
 		_skeleton.skeleton_updated.connect(_on_skeleton_updated)
 	_sync_baked_skeleton()
@@ -276,10 +308,10 @@ func _sync_baked_skeleton() -> void:
 		_rig_skeleton.set_bone_global_pose(rig_idx, pose)
 func _on_skeleton_updated() -> void:
 	_sync_baked_skeleton()
-func _update_SLOPPYSLIMYSHOWDOWN_squash() -> void:
+func update_body_squash() -> void:
 	if _squash_node == null:
 		return
-	_SLOPPYSLIMYSHOWDOWN_squash_time = maxf(0.0, _SLOPPYSLIMYSHOWDOWN_squash_time - get_process_delta_time())
+	body_squish_time = maxf(0.0, body_squish_time - get_process_delta_time())
 	var state: StringName = _body._current_state if _body else &"Idle"
 	var time_seconds := Time.get_ticks_msec() / 1000.0
 	var squash := Vector3.ONE
@@ -304,23 +336,23 @@ func _update_SLOPPYSLIMYSHOWDOWN_squash() -> void:
 	else:
 		var breath := sin(time_seconds * 2.0)
 		squash = Vector3(1.0 - 0.012 * breath, 1.0 + 0.02 * breath, 1.0 - 0.012 * breath)
-	if _SLOPPYSLIMYSHOWDOWN_squash_time > 0.0:
+	if body_squish_time > 0.0:
 		squash = Vector3(1.18, 0.75, 1.18)
 		rock = 0.0
 		hop = 0.0
 	var target := Vector3(
-		_SLOPPYSLIMYSHOWDOWN_base.x * squash.x, _SLOPPYSLIMYSHOWDOWN_base.y * squash.y, _SLOPPYSLIMYSHOWDOWN_base.z * squash.z
+		body_base.x * squash.x, body_base.y * squash.y, body_base.z * squash.z
 	)
 	var blend := clampf(get_process_delta_time() * 10.0, 0.0, 1.0)
-	_SLOPPYSLIMYSHOWDOWN_scale = _SLOPPYSLIMYSHOWDOWN_scale.lerp(target, blend)
-	_squash_node.scale = _SLOPPYSLIMYSHOWDOWN_scale
-	_SLOPPYSLIMYSHOWDOWN_rock = lerpf(_SLOPPYSLIMYSHOWDOWN_rock, rock, blend)
-	_SLOPPYSLIMYSHOWDOWN_hop = lerpf(_SLOPPYSLIMYSHOWDOWN_hop, hop, blend)
-	_squash_node.rotation = Vector3(0.0, 0.0, _SLOPPYSLIMYSHOWDOWN_rock)
+	body_scale = body_scale.lerp(target, blend)
+	_squash_node.scale = body_scale
+	body_rock = lerpf(body_rock, rock, blend)
+	body_hop = lerpf(body_hop, hop, blend)
+	_squash_node.rotation = Vector3(0.0, 0.0, body_rock)
 	_squash_node.position = Vector3(
-		_SLOPPYSLIMYSHOWDOWN_rest_pos.x * (_SLOPPYSLIMYSHOWDOWN_scale.x / _SLOPPYSLIMYSHOWDOWN_base.x),
-		_SLOPPYSLIMYSHOWDOWN_rest_pos.y * (_SLOPPYSLIMYSHOWDOWN_scale.y / _SLOPPYSLIMYSHOWDOWN_base.y) + _SLOPPYSLIMYSHOWDOWN_hop,
-		_SLOPPYSLIMYSHOWDOWN_rest_pos.z * (_SLOPPYSLIMYSHOWDOWN_scale.z / _SLOPPYSLIMYSHOWDOWN_base.z)
+		body_rest_pos.x * (body_scale.x / body_base.x),
+		body_rest_pos.y * (body_scale.y / body_base.y) + body_hop,
+		body_rest_pos.z * (body_scale.z / body_base.z)
 	)
 func _refresh_nickname_height_after_perspective_change() -> void:
 	if not is_multiplayer_authority() or _is_local_first_person():
@@ -334,6 +366,7 @@ func _align_pickup_area_with_camera() -> void:
 	var pickup_rotation := _pickup_area.global_rotation
 	pickup_rotation.y = wrapf(_spring_arm_offset.global_rotation.y + _pickup_area_camera_yaw_offset, -PI, PI)
 	_pickup_area.global_rotation = pickup_rotation
+# press R to reload when out of ammo
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_R:
 		var weapon_id := _equipped_weapon_id()
@@ -344,6 +377,7 @@ func _input(event: InputEvent) -> void:
 			_empty_click_count = 0
 
 
+# every frame - handles reload timers, reload line UI, and ammo counter text
 func _physics_process(delta):
 	if water_gun_reload_timer > 0:
 		water_gun_reload_timer -= delta
@@ -366,11 +400,11 @@ func _physics_process(delta):
 	if not multiplayer.has_multiplayer_peer() and not is_inside_tree():
 		return
 	if is_on_floor():
-		if _SLOPPYSLIMYSHOWDOWN_air_time > 0.25:
-			_SLOPPYSLIMYSHOWDOWN_squash_time = 0.22
-		_SLOPPYSLIMYSHOWDOWN_air_time = 0.0
+		if body_air_time > 0.25:
+			body_squish_time = 0.22
+		body_air_time = 0.0
 	else:
-		_SLOPPYSLIMYSHOWDOWN_air_time += delta
+		body_air_time += delta
 	var current_scene = get_tree().get_current_scene()
 	var should_freeze = false
 	if current_scene:
@@ -443,6 +477,7 @@ func _equipped_weapon_id() -> String:
 func _get_body_animation() -> StringName:
 	var anim: StringName = _body.get_movement_animation(velocity)
 	return anim
+# when you click to shoot or swing melee
 func _start_attack() -> void:
 	if is_attacking or is_collecting:
 		return
@@ -463,6 +498,7 @@ func _start_attack() -> void:
 		await get_tree().create_timer(0.13).timeout
 		is_attacking = false
 
+# get how much ammo is in the current mag for this weapon
 func get_ammo(weapon_id: String) -> int:
 	if weapon_id == WATER_WEAPON_ID:
 		return water_gun_ammo
@@ -470,12 +506,14 @@ func get_ammo(weapon_id: String) -> int:
 		return bazooka_ammo
 	return 0
 
+# use up one bullet from the current mag
 func consume_ammo(weapon_id: String) -> void:
 	if weapon_id == WATER_WEAPON_ID:
 		water_gun_ammo -= 1
 	elif weapon_id == BAZOOKA_WEAPON_ID:
 		bazooka_ammo -= 1
 
+# check if the weapon is currently reloading
 func is_reloading(weapon_id: String) -> bool:
 	if weapon_id == WATER_WEAPON_ID:
 		return water_gun_reload_timer > 0
@@ -483,6 +521,7 @@ func is_reloading(weapon_id: String) -> bool:
 		return bazooka_reload_timer > 0
 	return false
 
+# start the reload timer - refills mag from reserve when done
 func start_reload(weapon_id: String) -> void:
 	if weapon_id == WATER_WEAPON_ID:
 		water_gun_reload_timer = 2.0
@@ -547,6 +586,7 @@ func _play_melee_hit(target: Node3D) -> void:
 	var current_target = target.get("target_position")
 	if current_target is Vector3:
 		target.set("target_position", current_target + push)
+# shoot a water droplet from the camera direction
 func _shoot_water_gun() -> void:
 	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D
 	if cam == null:
@@ -562,6 +602,7 @@ func _shoot_water_gun() -> void:
 		p_speed = BAZOOKA_SPEED
 		p_damage = BAZOOKA_DAMAGE
 	_spawn_droplet(muzzle, shot_dir, droplet_scene, p_speed, p_damage, _equipped_weapon_id() == BAZOOKA_WEAPON_ID)
+# figure out where the shot goes based on crosshair aim
 func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	var aim_point := cam.global_position + dir * 60.0
 	var space := get_world_3d().direct_space_state
@@ -574,6 +615,7 @@ func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	if to_aim.length() > 0.05:
 		return to_aim.normalized()
 	return dir
+# create the water droplet projectile and add it to the world
 func _spawn_droplet(muzzle: Vector3, shot_dir: Vector3, droplet_scene: PackedScene = null, p_speed: float = WATER_SPEED, p_damage: float = WATER_DAMAGE, is_bazooka: bool = false) -> void:
 	var droplet = (droplet_scene if droplet_scene else DROPLET_SCENE).instantiate()
 	if droplet.has_method("setup"):
@@ -612,27 +654,29 @@ func _get_water_gun_muzzle(dir: Vector3) -> Vector3:
 		var mi := meshes[i] as MeshInstance3D
 		bounds = bounds.merge(mi.global_transform * mi.get_aabb())
 	return bounds.get_center() + dir * (bounds.size.length() * 0.25 + 0.05)
+# gun recoil kick when shooting - moves gun back then returns to rest
 func _kick_held_weapon() -> void:
 	var weapon_id := _equipped_weapon_id()
 	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "WaterGun"))
 	var weapon := get_node_or_null(HAND_EQUIPMENT_PATH + node_name) as Node3D
 	if weapon == null:
 		return
-	if not _weapon_rest_position.has(weapon_id):
-		_weapon_rest_position[weapon_id] = weapon.position
-	var rest_position := _weapon_rest_position[weapon_id] as Vector3
+	if not gun_rest_pos.has(weapon_id):
+		gun_rest_pos[weapon_id] = weapon.position
+	var rest_position := gun_rest_pos[weapon_id] as Vector3
 	var kick := create_tween()
 	kick.tween_property(weapon, "position", rest_position + Vector3(0, -0.03, 0.08), 0.05)
 	kick.tween_property(weapon, "position", rest_position, 0.1)
+# melee swing animation for non-gun weapons
 func _swing_held_weapon() -> void:
 	var weapon_id := _equipped_weapon_id()
 	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "WaterGun"))
 	var weapon := get_node_or_null(HAND_EQUIPMENT_PATH + node_name) as Node3D
 	if weapon == null:
 		return
-	if not _weapon_rest_rotation.has(weapon_id):
-		_weapon_rest_rotation[weapon_id] = weapon.rotation
-	var rest_rotation := _weapon_rest_rotation[weapon_id] as Vector3
+	if not gun_rest_rot.has(weapon_id):
+		gun_rest_rot[weapon_id] = weapon.rotation
+	var rest_rotation := gun_rest_rot[weapon_id] as Vector3
 	var swing := create_tween()
 	swing.tween_property(weapon, "rotation", rest_rotation + Vector3(-0.9, 0.0, 0.4), 0.1)
 	swing.tween_property(weapon, "rotation", rest_rotation, 0.15)
@@ -670,14 +714,14 @@ func _server_consume_animation_request_token() -> bool:
 		_last_server_animation_token_update_msec = now
 	else:
 		var elapsed_seconds := (now - _last_server_animation_token_update_msec) / 1000.0
-		_server_animation_request_tokens = minf(
+		anim_tokens = minf(
 			SERVER_ANIMATION_REQUEST_BURST,
-			_server_animation_request_tokens + elapsed_seconds * SERVER_ANIMATION_REQUESTS_PER_SECOND
+			anim_tokens + elapsed_seconds * SERVER_ANIMATION_REQUESTS_PER_SECOND
 		)
 		_last_server_animation_token_update_msec = now
-	if _server_animation_request_tokens < 1.0:
+	if anim_tokens < 1.0:
 		return false
-	_server_animation_request_tokens -= 1.0
+	anim_tokens -= 1.0
 	return true
 func _server_publish_animation(state: StringName) -> void:
 	if not multiplayer.is_server():
@@ -698,7 +742,7 @@ func sync_animation_state(state: StringName, sequence: int) -> void:
 	if is_multiplayer_authority():
 		return
 	_body.play_animation_state(state, true)
-	_update_SLOPPYSLIMYSHOWDOWN_squash()
+	update_body_squash()
 func _push_collided_items() -> void:
 	for i in get_slide_collision_count():
 		var c = get_slide_collision(i)
@@ -743,7 +787,7 @@ func _process(_delta):
 		first_person and not camera_input_blocked and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	)
 	_check_out_of_bounds()
-	_update_SLOPPYSLIMYSHOWDOWN_squash()
+	update_body_squash()
 	_apply_aim_zoom(_delta)
 	_reload_line.visible = false
 	var reload_timer := 0.0
@@ -871,7 +915,7 @@ func set_player_skin(skin_name: SkinColor) -> void:
 	_set_mesh_texture(_chest_mesh, texture)
 	_set_mesh_texture(_face_mesh, texture)
 	_set_mesh_texture(_limbs_head_mesh, texture)
-	_tint_sloppy_rig(_get_skin_tint(skin_name))
+	tint_body(_get_skin_tint(skin_name))
 func _set_mesh_texture(mesh_instance: MeshInstance3D, texture: CompressedTexture2D) -> void:
 	if mesh_instance:
 		var new_material := StandardMaterial3D.new()
@@ -879,7 +923,7 @@ func _set_mesh_texture(mesh_instance: MeshInstance3D, texture: CompressedTexture
 		mesh_instance.set_surface_override_material(0, new_material)
 func _get_skin_tint(skin_name: SkinColor) -> Color:
 	return SKIN_TINTS.get(int(skin_name), Color(0.25, 0.5, 0.95))
-func _tint_sloppy_rig(color: Color) -> void:
+func tint_body(color: Color) -> void:
 	var root := _rig_root
 	if root == null:
 		root = get_node_or_null("GodotRobot3D/RobotArmature/SLOPPYSLIMYSHOWDOWN") as Node3D
@@ -1141,9 +1185,9 @@ func request_equipment_appearance() -> void:
 	var requester_id := multiplayer.get_remote_sender_id()
 	if requester_id <= 0:
 		return
-	if _appearance_sync_requesters.has(requester_id):
+	if appearance_requesters.has(requester_id):
 		return
-	_appearance_sync_requesters[requester_id] = true
+	appearance_requesters[requester_id] = true
 	_sync_equipment_appearance_to_peer(requester_id)
 func _sync_equipment_appearance_to_peer(peer_id: int) -> void:
 	if not multiplayer.is_server() or not player_inventory or peer_id <= 0:
