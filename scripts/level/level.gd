@@ -55,6 +55,8 @@ func _ready():
 	Network.server_disconnected.connect(_on_server_disconnected)
 	Network.connection_failed.connect(_on_connection_failed)
 	Network.connect("player_connected", Callable(self, "_on_player_connected"))
+	# refresh the leaderboard when kills change
+	Network.connect("leaderboard_changed", Callable(self, "_refresh_player_list"))
 	Network.connect("lan_servers_changed", Callable(self, "_on_lan_servers_changed"))
 	multiplayer.peer_disconnected.connect(_remove_player)
 	Network.start_lan_discovery()

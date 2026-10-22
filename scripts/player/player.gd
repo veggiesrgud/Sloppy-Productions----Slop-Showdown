@@ -170,7 +170,8 @@ func _enter_tree():
 		return
 	set_multiplayer_authority(str(name).to_int())
 	$SpringArmOffset/SpringArm3D/Camera3D.current = is_multiplayer_authority()
-func damage(amount):
+# attacker_id is only set for pvp kills
+func damage(amount, attacker_id: int = 0):
 	var was_alive := health > 0
 	health -= int(amount)
 	health_updated.emit(health)
@@ -180,6 +181,8 @@ func damage(amount):
 		health_updated.emit(health)
 		if was_alive:
 			_play_death_sound()
+		if attacker_id > 0 and multiplayer.is_server():
+			Network.register_kill(attacker_id)
 		global_position = _spawn_point
 		velocity = Vector3.ZERO
 func _play_hit_sound() -> void:
@@ -201,7 +204,7 @@ func take_pvp_hit(amount: float, attacker_id: int, knockback_dir: Vector3 = Vect
 		var kb := knockback_dir.normalized() * knockback_force
 		kb.y = absf(kb.y) + knockback_force * 0.6
 		velocity = kb
-	damage(amount)
+	damage(amount, attacker_id)
 # called when the player spawns - sets up inventory, skin, camera, and multiplayer
 func _ready():
 	add_to_group("player")
