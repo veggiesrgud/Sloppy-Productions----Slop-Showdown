@@ -49,6 +49,7 @@ const PLAYER_SEPARATION_HEIGHT := 1.5
 # water gun stats
 const WATER_DAMAGE := 25.0
 const WATER_SPEED := 22.0
+const WATER_GUN_MAGAZINE_SIZE := 15
 # bazooka stats
 const BAZOOKA_WEAPON_ID := "bazooka"
 const BAZOOKA_DROPLET_SCENE := preload("res://objects/big_droplet.tscn")
@@ -94,7 +95,7 @@ var shift_locked := true
 signal health_updated(health)
 var health: int = 100
 # ammo counts - current bullets in mag and reserve backup ammo
-var water_gun_ammo := 6
+var water_gun_ammo := WATER_GUN_MAGAZINE_SIZE
 var water_gun_reserve := 999
 var bazooka_ammo := 1
 var bazooka_reserve := 999
@@ -385,7 +386,7 @@ func _physics_process(delta):
 	if water_gun_reload_timer > 0:
 		water_gun_reload_timer -= delta
 		if water_gun_reload_timer <= 0:
-			var needed := 6 - water_gun_ammo
+			var needed := WATER_GUN_MAGAZINE_SIZE - water_gun_ammo
 			var refill := minf(needed, water_gun_reserve)
 			water_gun_ammo += refill
 			water_gun_reserve -= refill
@@ -811,7 +812,7 @@ func _process(_delta):
 		_ammo_label.text = ""
 	else:
 		if weapon_id == WATER_WEAPON_ID:
-			ammo_text = str(water_gun_ammo) + " / 6   " + str(water_gun_reserve)
+			ammo_text = str(water_gun_ammo) + " / " + str(WATER_GUN_MAGAZINE_SIZE) + "   " + str(water_gun_reserve)
 		elif weapon_id == BAZOOKA_WEAPON_ID:
 			ammo_text = str(bazooka_ammo) + " / 1   " + str(bazooka_reserve)
 		_ammo_label.text = ammo_text

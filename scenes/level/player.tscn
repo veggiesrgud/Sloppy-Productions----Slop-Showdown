@@ -4822,7 +4822,7 @@ _character = NodePath("..")
 animation_player = NodePath("AnimationPlayer")
 
 [node name="FirstPersonCameraSource" type="Node3D" parent="GodotRobot3D" unique_id=1850216777]
-transform = Transform3D(0.5784721, 5.4123372e-15, -1.3791846e-07, 1.0866774e-09, 0.578454, 0.004557855, 1.3791423e-07, -0.0045578615, 0.5784541, 1.2212453e-15, 1.0367339, 0.017233532)
+transform = Transform3D(0.5784721, 5.4123372e-15, -1.3791846e-07, 1.0866774e-09, 0.578454, 0.004557855, 1.3791423e-07, -0.0045578615, 0.5784541, 8.881784e-16, 0.996163, 0.017233532)
 
 [node name="FirstPersonCameraAnchor" type="Node3D" parent="GodotRobot3D/FirstPersonCameraSource" unique_id=1061916657]
 transform = Transform3D(-1, -4.2919936e-08, 3.9609992e-07, -1.9330494e-07, 0.9215918, -0.38816008, -3.483829e-07, -0.38816008, -0.9215918, -2.6863398e-07, 1.2807279, -0.5394225)
@@ -5063,6 +5063,7 @@ visible = false
 
 [node name="Bazooka" parent="GodotRobot3D/RobotArmature/Skeleton3D/RightHandAttach" unique_id=352347372 instance=ExtResource("48_bazooka")]
 transform = Transform3D(0.028074943, -0.01123081, 0.29526132, 0.19082049, 0.009137498, -0.043089107, -0.0050841793, 0.28091398, 0.013205766, 0.58360547, 2.0906725, -0.51663136)
+visible = false
 
 [node name="BackAttach" type="BoneAttachment3D" parent="GodotRobot3D/RobotArmature/Skeleton3D" unique_id=1338054728]
 transform = Transform3D(1, 7.1054274e-15, -2.3841851e-07, 4.3943693e-09, 0.99983, 0.01843132, 2.3837802e-07, -0.018431328, 0.9998302, -2.2003666e-16, 1.2942743, 0.05275946)
@@ -5082,27 +5083,27 @@ bone_idx = 5
 remote_path = NodePath("../../../../FirstPersonCameraSource")
 
 [node name="Fedora" parent="GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach" unique_id=525657311 instance=ExtResource("34_fedora")]
-transform = Transform3D(-4.8082526e-08, -6.661338e-16, -1.1, 1.8626451e-09, 1.1, -4.440892e-16, 1.1, 0, -4.8082512e-08, -1.1953105e-11, 0.93114185, -5.0127506e-05)
+transform = Transform3D(-4.8082526e-08, -6.661338e-16, -1.1, 9.313226e-10, 1.1, -5.551115e-16, 1.1, 0, -4.8082512e-08, -8.4011553e-10, 0.49029696, -0.0035237148)
 visible = false
 
 [node name="Headphones" parent="GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach" unique_id=1013512068 instance=ExtResource("39_headphones")]
-transform = Transform3D(1.3033442, 0, 0, 0, 1.3033442, 0, 0, 0, 1.3033442, 0, 0.7998626, 0)
+transform = Transform3D(1.0681312, 5.551115e-16, 2.842171e-14, -1.110223e-16, 0.92561316, -1.8626451e-09, -4.2632564e-14, 4.656613e-10, 1.300368, -5.8083494e-10, 0.49067366, -0.0024362132)
 visible = false
 
 [node name="PirateHat" parent="GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach" unique_id=1392735862 instance=ExtResource("41_pirate")]
-transform = Transform3D(1.3331646, 0.0055106063, -0.6993711, -0.0055106045, 1.5054717, 0.0013576727, 0.6993713, 0.0013576644, 1.3331753, 0.22902387, 0.19673097, 0.07076195)
+transform = Transform3D(1.3331646, 0.0055106063, -0.6993711, -0.005510605, 1.5054717, 0.0013576727, 0.69937134, 0.0013576662, 1.3331753, 0.1596843, -0.11243284, 0.06832595)
 visible = false
 
 [node name="SheriffHat" parent="GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach" unique_id=1012174585 instance=ExtResource("42_sheriff")]
-transform = Transform3D(1.3335581, 0, 0, 0, 1.3335581, 0, 0, 0, 1.3335582, 0, 0.88481236, 0)
+transform = Transform3D(1.3335582, 0, 1.4210855e-14, 1.110223e-16, 1.333558, 0, -2.842171e-14, 0, 1.3335582, -7.689005e-10, 0.47551358, -0.003225021)
 visible = false
 
 [node name="Sombrero" parent="GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach" unique_id=966944071 instance=ExtResource("43_sombrero")]
-transform = Transform3D(1.6, -6.661338e-16, 5.684342e-14, 4.440892e-16, 1.6, 1.8626451e-09, -5.684342e-14, -2.7939677e-09, 1.6, -1.6552981e-10, 0.906646, -0.00069428235)
+transform = Transform3D(1.6, -4.440892e-16, 5.684342e-14, 2.220446e-16, 1.6, 9.313226e-10, -5.684342e-14, -1.8626451e-09, 1.6, -8.1758067e-10, 0.5595485, -0.003429193)
 visible = false
 
 [node name="WizardHat" parent="GodotRobot3D/RobotArmature/Skeleton3D/HeadAttach" unique_id=265283568 instance=ExtResource("45_wizard")]
-transform = Transform3D(1.6, -1.6993842e-23, 1.440293e-14, 0, 1.6, 1.8878208e-09, -1.440293e-14, -1.8878208e-09, 1.6, -2.9316993e-11, 0.91060805, -0.00012296438)
+transform = Transform3D(1.6, 4.440892e-16, 2.842171e-14, 2.220446e-16, 1.6, 9.313226e-10, -2.842171e-14, -9.313226e-10, 1.6, -7.560246e-10, 0.52376926, -0.0031710155)
 visible = false
 
 [node name="SLOPPYSLIMYSHOWDOWN" parent="GodotRobot3D/RobotArmature" unique_id=1883396410 instance=ExtResource("47_rig")]

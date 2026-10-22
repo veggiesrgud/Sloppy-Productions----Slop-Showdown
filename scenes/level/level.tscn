@@ -159,3 +159,147 @@ light_indirect_energy = 0.0
 light_volumetric_fog_energy = 16.0
 light_negative = true
 shadow_enabled = true
+
+[node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=830761930]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, 7.12504, 13.11866, 8.831693)
+light_energy = 2.61
+light_specular = 9.579
+shadow_enabled = true
+distance_fade_enabled = true
+spot_range = 23.784504
+spot_angle = 61.315636
+
+[node name="SpotLight3D5" type="SpotLight3D" parent="." unique_id=1290639267]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, -1.7926469, 13.11866, -9.298425)
+light_energy = 1.975
+light_specular = 9.579
+shadow_enabled = true
+distance_fade_enabled = true
+spot_range = 23.784504
+spot_angle = 52.961178
+
+[node name="SpotLight3D2" type="SpotLight3D" parent="." unique_id=1811103109]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, -13.097102, 25.392696, 7.8229904)
+light_energy = 8.722
+light_indirect_energy = 4.165
+light_volumetric_fog_energy = 0.0
+light_specular = 1.452
+shadow_enabled = true
+distance_fade_enabled = true
+distance_fade_begin = 32.0
+distance_fade_shadow = 4096.0
+distance_fade_length = 0.0
+spot_range = 18.564322
+spot_angle = 76.59529
+
+[node name="SpotLight3D3" type="SpotLight3D" parent="." unique_id=1238921015]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, 7.6030846, 25.392696, 7.8229904)
+light_energy = 8.722
+light_indirect_energy = 4.165
+light_volumetric_fog_energy = 0.0
+light_specular = 1.452
+shadow_enabled = true
+distance_fade_enabled = true
+distance_fade_begin = 32.0
+distance_fade_shadow = 4096.0
+distance_fade_length = 0.0
+spot_range = 18.564322
+spot_angle = 66.1622
+
+[node name="SpotLight3D4" type="SpotLight3D" parent="." unique_id=169003502]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, -16.237402, 25.392696, -13.503653)
+light_energy = 2.436
+light_indirect_energy = 4.165
+light_volumetric_fog_energy = 0.0
+light_specular = 1.452
+shadow_enabled = true
+distance_fade_enabled = true
+distance_fade_begin = 32.0
+distance_fade_shadow = 4096.0
+distance_fade_length = 0.0
+spot_range = 18.564322
+spot_angle = 55.50327
+
+[node name="SpotLight3D6" type="SpotLight3D" parent="." unique_id=884945193]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, -16.237402, 13.787544, -13.503653)
+light_energy = 2.436
+light_indirect_energy = 4.165
+light_volumetric_fog_energy = 0.0
+light_specular = 1.452
+shadow_enabled = true
+distance_fade_enabled = true
+distance_fade_begin = 32.0
+distance_fade_shadow = 4096.0
+distance_fade_length = 0.0
+spot_range = 18.564322
+spot_angle = 56.738373
+
+[node name="SpotLight3D7" type="SpotLight3D" parent="." unique_id=219430516]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, 13.207589, 13.787544, -17.107422)
+light_energy = 2.436
+light_indirect_energy = 4.165
+light_volumetric_fog_energy = 0.0
+light_specular = 1.452
+shadow_enabled = true
+distance_fade_enabled = true
+distance_fade_begin = 32.0
+distance_fade_shadow = 4096.0
+distance_fade_length = 0.0
+spot_range = 18.564322
+spot_angle = 54.801853
+
+[node name="SpotLight3D8" type="SpotLight3D" parent="." unique_id=376977253]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, -16.398067, 13.787544, 14.89856)
+light_energy = 2.436
+light_indirect_energy = 4.165
+light_volumetric_fog_energy = 0.0
+light_specular = 1.452
+shadow_enabled = true
+distance_fade_enabled = true
+distance_fade_begin = 32.0
+distance_fade_shadow = 4096.0
+distance_fade_length = 0.0
+spot_range = 18.564322
+spot_angle = 60.31301
+
+[node name="SpotLight3D9" type="SpotLight3D" parent="." unique_id=1317638853]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, 20.34368, 14.264376, 8.469739)
+light_energy = 2.436
+light_indirect_energy = 4.165
+light_volumetric_fog_energy = 0.0
+light_specular = 1.452
+shadow_enabled = true
+distance_fade_enabled = true
+distance_fade_begin = 32.0
+distance_fade_shadow = 4096.0
+distance_fade_length = 0.0
+spot_range = 18.564322
+spot_angle = 41.829205
+
+[node name="SpotLight3D10" type="SpotLight3D" parent="." unique_id=1709950878]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, 20.47574, 25.077753, -4.808194)
+light_energy = 2.436
+light_indirect_energy = 4.165
+light_volumetric_fog_energy = 0.0
+light_specular = 1.452
+shadow_enabled = true
+distance_fade_enabled = true
+distance_fade_begin = 32.0
+distance_fade_shadow = 4096.0
+distance_fade_length = 0.0
+spot_range = 18.564322
+spot_angle = 47.929504
+
+[node name="SpotLight3D11" type="SpotLight3D" parent="." unique_id=808343567]
+transform = Transform3D(1, 0, 0, 0, -0.0024327454, 0.9999971, 0, -0.9999971, -0.0024327454, 21.771246, 25.077753, 7.0221043)
+light_energy = 2.436
+light_indirect_energy = 4.165
+light_volumetric_fog_energy = 0.0
+light_specular = 1.452
+shadow_enabled = true
+distance_fade_enabled = true
+distance_fade_begin = 32.0
+distance_fade_shadow = 4096.0
+distance_fade_length = 0.0
+spot_range = 18.564322
+spot_angle = 54.565178
