@@ -20,7 +20,6 @@ run/main_scene="res://scenes/loading.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 boot_splash/bg_color=Color(1, 1, 1, 1)
 boot_splash/image="res://splash-screen.png"
-config/icon="res://icon.png"
 
 [autoload]
 
