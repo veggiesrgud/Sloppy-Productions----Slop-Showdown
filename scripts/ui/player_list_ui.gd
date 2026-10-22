@@ -45,28 +45,48 @@ func hide_players() -> void:
 
 
 func refresh_players(players: Dictionary, local_peer_id: int) -> void:
-	var peer_ids: Array[int] = []
+	var entries: Array = []
 	for peer_id_value in players:
 		var peer_id := int(peer_id_value)
-		if peer_id > 0:
-			peer_ids.append(peer_id)
-	peer_ids.sort()
-	_player_count = peer_ids.size()
-
-	count_label.text = "%d online" % _player_count
-	players_label.clear()
-	for index in range(peer_ids.size()):
-		var peer_id := peer_ids[index]
+		if peer_id <= 0:
+			continue
 		var player_info: Dictionary = players.get(peer_id, {})
-		var nickname := Network.sanitize_nickname(str(player_info.get("nick", "")), "Player_" + str(peer_id))
-		var local_marker := " [color=#c7ccd4](you)[/color]" if peer_id == local_peer_id else ""
+		entries.append(
+			{
+				"id": peer_id,
+				"nick": Network.sanitize_nickname(
+					str(player_info.get("nick", "")), "Player_" + str(peer_id)
+				),
+				"kills": int(player_info.get("kills", 0)),
+			}
+		)
+	# sort by kills, highest first
+	entries.sort_custom(
+		func(a, b):
+			var a_kills := int(a["kills"])
+			var b_kills := int(b["kills"])
+			if a_kills != b_kills:
+				return a_kills > b_kills
+			return int(a["id"]) < int(b["id"])
+	)
+	_player_count = entries.size()
+
+	count_label.text = "%d players" % _player_count
+	players_label.clear()
+	for index in range(entries.size()):
+		var entry: Dictionary = entries[index]
+		var local_marker := (
+			" [color=#c7ccd4](you)[/color]" if int(entry["id"]) == local_peer_id else ""
+		)
+		var kills := int(entry["kills"])
+		var kill_text := "1 kill" if kills == 1 else "%d kills" % kills
 		players_label.append_text(
 			(
-				"[color=#a8adb5]>[/color] [b]%s[/b]%s [color=#9aa0a8]#%d[/color]"
-				% [_escape_bbcode(nickname), local_marker, peer_id]
+				"[color=#a8adb5]#%d[/color] [b]%s[/b]%s [color=#ffd166]%s[/color]"
+				% [index + 1, _escape_bbcode(str(entry["nick"])), local_marker, kill_text]
 			)
 		)
-		if index < peer_ids.size() - 1:
+		if index < entries.size() - 1:
 			players_label.append_text("\n")
 	_update_layout()
 

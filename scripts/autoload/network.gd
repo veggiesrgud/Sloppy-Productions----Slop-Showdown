@@ -4,6 +4,7 @@ signal player_connected(peer_id, player_info)
 signal server_disconnected
 signal connection_failed
 signal lan_servers_changed(servers: Array)
+signal leaderboard_changed
 
 const SERVER_ADDRESS: String = "127.0.0.1"
 const SERVER_PORT: int = 8080
@@ -17,7 +18,7 @@ const DISCOVERY_EXPIRE: float = 6.0
 const SERVERS_CONFIG: String = "user://slop_servers.cfg"
 
 var players = {}
-var player_info = {"nick": "host", "skin": Character.SkinColor.BLUE}
+var player_info = {"nick": "host", "skin": Character.SkinColor.BLUE, "kills": 0}
 var lan_servers: Array = []
 var _session_active := false
 var _discovery_socket: PacketPeerUDP = null
@@ -114,9 +115,38 @@ func _register_player(new_player_info):
 	if players.has(new_player_id):
 		return
 	var sanitized_info = sanitize_player_info(new_player_info, "Player_" + str(new_player_id))
+	# new players start at zero
+	sanitized_info["kills"] = 0
 	players[new_player_id] = sanitized_info
 	player_connected.emit(new_player_id, sanitized_info)
 	_sync_registered_player.rpc(new_player_id, sanitized_info)
+
+
+# server tracks kills so clients can't change them
+func register_kill(peer_id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	if peer_id <= 0 or not players.has(peer_id):
+		return
+	var info: Dictionary = players[peer_id]
+	info["kills"] = int(info.get("kills", 0)) + 1
+	players[peer_id] = info
+	sync_player_kills.rpc(peer_id, info["kills"])
+	leaderboard_changed.emit()
+
+
+@rpc("any_peer", "reliable")
+func sync_player_kills(peer_id: int, kills: int) -> void:
+	if multiplayer.is_server():
+		return
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	if not players.has(peer_id):
+		return
+	var info: Dictionary = players[peer_id]
+	info["kills"] = maxi(0, kills)
+	players[peer_id] = info
+	leaderboard_changed.emit()
 
 
 func _on_player_disconnected(id):
@@ -178,7 +208,8 @@ func _sync_registered_player(peer_id: int, registered_player_info: Dictionary):
 func sanitize_player_info(info: Dictionary, fallback_nick: String) -> Dictionary:
 	return {
 		"nick": sanitize_nickname(str(info.get("nick", "")), fallback_nick),
-		"skin": sanitize_skin_value(info.get("skin", Character.SkinColor.BLUE))
+		"skin": sanitize_skin_value(info.get("skin", Character.SkinColor.BLUE)),
+		"kills": maxi(0, int(info.get("kills", 0)))
 	}
 
 
