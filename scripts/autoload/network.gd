@@ -1,3 +1,4 @@
+# network stuff lobby and multiplayer and kills tracking
 extends Node
 
 signal player_connected(peer_id, player_info)
@@ -5,6 +6,12 @@ signal server_disconnected
 signal connection_failed
 signal lan_servers_changed(servers: Array)
 signal leaderboard_changed
+# new lobby signals
+signal lobby_game_created(game_id: String, join_code: String, is_public: bool)
+signal lobby_game_joined(game_id: String, join_code: String, peer_id: int, host_address: String, host_port: int, is_public: bool, max_players: int)
+signal lobby_peer_connected(peer_id: int)
+signal lobby_peer_disconnected(peer_id: int)
+signal lobby_error(message: String)
 
 const SERVER_ADDRESS: String = "127.0.0.1"
 const SERVER_PORT: int = 8080
@@ -16,6 +23,11 @@ const DISCOVERY_MAGIC: String = "SLOP1"
 const DISCOVERY_INTERVAL: float = 1.0
 const DISCOVERY_EXPIRE: float = 6.0
 const SERVERS_CONFIG: String = "user://slop_servers.cfg"
+# lobby server change this to your deployed url
+const LOBBY_URL: String = "https://collinsfamily.alwaysdata.net"
+const LOBBY_WS_URL: String = "wss://collinsfamily.alwaysdata.net"
+const LOBBY_HEARTBEAT_INTERVAL: float = 10.0
+const LOBBY_GAME_TIMEOUT: float = 30.0
 
 var players = {}
 var player_info = {"nick": "host", "skin": Character.SkinColor.BLUE, "kills": 0}
@@ -28,6 +40,17 @@ var _broadcast_active := false
 var _broadcast_timer := 0.0
 var _server_display_name := ""
 var _lan_seen: Dictionary = {}
+# lobby state
+var _lobby_game_id: String = ""
+var _lobby_join_code: String = ""
+var _lobby_is_public := false
+var _lobby_peer_id: int = 0
+var _lobby_max_players: int = 0
+var _lobby_relay_ws: WebSocketPeer = null
+var _lobby_heartbeat_timer := 0.0
+var _lobby_http: HTTPRequest = null
+var _lobby_pending_requests: Dictionary = {}
+var _using_relay := false
 
 
 func _ready() -> void:
@@ -36,6 +59,11 @@ func _ready() -> void:
 	multiplayer.peer_disconnected.connect(_on_player_disconnected)
 	multiplayer.peer_connected.connect(_on_player_connected)
 	multiplayer.connected_to_server.connect(_on_connected_ok)
+
+	# setup lobby HTTP client
+	_lobby_http = HTTPRequest.new()
+	add_child(_lobby_http)
+	_lobby_http.request_completed.connect(_on_lobby_response)
 
 
 func _process(delta: float) -> void:
@@ -48,8 +76,21 @@ func _process(delta: float) -> void:
 		_poll_lan_discovery()
 		_expire_lan_servers(delta)
 
+	# lobby relay polling
+	if _using_relay and _lobby_relay_ws:
+		_lobby_relay_ws.poll()
+		_lobby_process_relay()
 
-func start_host(nickname: String, skin_color_str: String):
+	# lobby heartbeat
+	if _lobby_game_id and multiplayer.is_server():
+		_lobby_heartbeat_timer -= delta
+		if _lobby_heartbeat_timer <= 0:
+			_lobby_heartbeat_timer = LOBBY_HEARTBEAT_INTERVAL
+			_lobby_send_heartbeat()
+
+
+# host stuff creates server and lobby entry
+func start_host(nickname: String, skin_color_str: String, is_public: bool = true, custom_code: String = ""):
 	var peer = ENetMultiplayerPeer.new()
 	var error = peer.create_server(SERVER_PORT, MAX_PLAYERS)
 	if error:
@@ -70,7 +111,16 @@ func start_host(nickname: String, skin_color_str: String):
 	player_connected.emit(1, player_info)
 	start_lan_broadcast(str(player_info["nick"]))
 
+	# register with lobby server
+	_lobby_is_public = is_public
+	_lobby_create_game(str(player_info["nick"]), is_public, custom_code)
+	# report our local address so clients can connect directly
+	var lan_ip := _local_lan_ip()
+	if not lan_ip.is_empty() and lan_ip != SERVER_ADDRESS:
+		_lobby_report_address(lan_ip, SERVER_PORT)
 
+
+# join stuff connects client to host by ip or lobby
 func join_game(nickname: String, skin_color_str: String, address: String = SERVER_ADDRESS):
 	address = sanitize_address(address)
 	if address.is_empty():
@@ -123,6 +173,7 @@ func _register_player(new_player_info):
 
 
 # server tracks kills so clients can't change them
+# kill tracking stuff only server changes kills
 func register_kill(peer_id: int) -> void:
 	if not multiplayer.is_server():
 		return
@@ -171,15 +222,6 @@ func leave_game() -> void:
 	_finish_session()
 
 
-func _finish_session() -> void:
-	var had_session := _session_active or multiplayer.multiplayer_peer != null or not players.is_empty()
-	_session_active = false
-	multiplayer.multiplayer_peer = null
-	players.clear()
-	if had_session:
-		server_disconnected.emit()
-
-
 func skin_str_to_e(s):
 	match str(s).strip_edges().to_lower():
 		"blue":
@@ -192,6 +234,196 @@ func skin_str_to_e(s):
 			return Character.SkinColor.RED
 		_:
 			return Character.SkinColor.BLUE
+
+
+func _finish_session() -> void:
+	var had_session := _session_active or multiplayer.multiplayer_peer != null or not players.is_empty()
+	_session_active = false
+	multiplayer.multiplayer_peer = null
+	players.clear()
+	_lobby_disconnect_relay()
+	_lobby_game_id = ""
+	_lobby_join_code = ""
+	_lobby_is_public = false
+	_lobby_peer_id = 0
+	_lobby_max_players = 0
+	_using_relay = false
+	if had_session:
+		server_disconnected.emit()
+
+
+# 
+# lobby server integration
+# 
+
+func _lobby_create_game(host_name: String, is_public: bool, custom_code: String = "") -> void:
+	var data = {
+		"name": host_name,
+		"host_name": host_name,
+		"is_public": is_public,
+		"max_players": MAX_PLAYERS,
+		"host_port": SERVER_PORT,
+	}
+	if not custom_code.is_empty():
+		data["custom_join_code"] = custom_code.strip_edges().to_upper()
+	_lobby_post("/api/games", data, "create_game")
+
+
+func join_by_code(join_code: String, nickname: String, skin_color_str: String) -> void:
+	join_code = join_code.strip_edges().to_upper()
+	if join_code.is_empty():
+		connection_failed.emit()
+		lobby_error.emit("Invalid join code")
+		return
+
+	var data = {
+		"join_code": join_code,
+		"player_name": sanitize_nickname(nickname, "Player"),
+	}
+	_lobby_post("/api/games/join", data, "join_game", {"skin": skin_color_str, "nickname": nickname})
+
+
+func _lobby_join_game(skin_color_str: String, nickname: String, host_address: String = "", host_port: int = SERVER_PORT) -> void:
+	# direct ENet connection to host (relay disabled for reliability)
+	var target_address = host_address.strip_edges()
+	if target_address.is_empty():
+		target_address = SERVER_ADDRESS  # fallback to localhost for LAN
+	var target_port = host_port if host_port > 0 else SERVER_PORT
+
+	var peer = ENetMultiplayerPeer.new()
+	var error = peer.create_client(target_address, target_port)
+	if error:
+		push_error("Failed to connect to host at %s:%d - error: %s" % [target_address, target_port, error])
+		connection_failed.emit()
+		lobby_error.emit("Failed to connect to host")
+		return
+
+	peer.host.compress(ENetConnection.COMPRESS_RANGE_CODER)
+	multiplayer.multiplayer_peer = peer
+	_session_active = true
+
+	player_info["nick"] = sanitize_nickname(nickname, "Player_" + str(_lobby_peer_id))
+	player_info["skin"] = skin_str_to_e(skin_color_str)
+
+	# keep websocket connected for lobby events, but packets go direct
+	_lobby_connect_relay()
+
+
+func _lobby_connect_relay() -> void:
+	if _lobby_game_id.is_empty() or _lobby_peer_id == 0:
+		return
+	var ws_url = "%s/ws/relay/%s/%d" % [LOBBY_WS_URL, _lobby_game_id, _lobby_peer_id]
+	_lobby_relay_ws = WebSocketPeer.new()
+	var err = _lobby_relay_ws.connect_to_url(ws_url)
+	if err != OK:
+		push_error("Lobby relay connect failed: %s" % err)
+		connection_failed.emit()
+		lobby_error.emit("Failed to connect to relay server")
+		return
+
+	# poll the websocket in _process
+	_using_relay = true
+
+
+func _lobby_disconnect_relay() -> void:
+	if _lobby_relay_ws:
+		_lobby_relay_ws.close()
+		_lobby_relay_ws = null
+	_using_relay = false
+
+
+func _lobby_post(path: String, data: Dictionary, action: String, extra: Dictionary = {}) -> void:
+	if not _lobby_http:
+		return
+	var headers = ["Content-Type: application/json"]
+	var body = JSON.stringify(data)
+	var request_id = str(Time.get_unix_time_from_system()) + "_" + str(randi())
+	_lobby_pending_requests[request_id] = {"action": action, "extra": extra}
+	_lobby_http.request(LOBBY_URL + path, headers, HTTPClient.METHOD_POST, body)
+
+
+func _on_lobby_response(request_id: int, response_code: int, headers: Array, body: PackedByteArray) -> void:
+	var key = str(request_id)
+	if not _lobby_pending_requests.has(key):
+		return
+	var pending = _lobby_pending_requests[key]
+	_lobby_pending_requests.erase(key)
+
+	var response_text = body.get_string_from_utf8()
+	var response: Dictionary = JSON.parse_string(response_text)
+	if response_code < 200 or response_code >= 300:
+		var msg = response.get("detail", "Request failed")
+		connection_failed.emit()
+		lobby_error.emit("%s: %s" % [pending.action, msg])
+		return
+
+	match pending.action:
+		"create_game":
+			_lobby_game_id = str(response.get("game_id", ""))
+			_lobby_join_code = str(response.get("join_code", ""))
+			_lobby_is_public = bool(response.get("is_public", false))
+			_lobby_peer_id = 1
+			_lobby_max_players = MAX_PLAYERS
+			lobby_game_created.emit(_lobby_game_id, _lobby_join_code, _lobby_is_public)
+			# start heartbeat
+			_lobby_heartbeat_timer = LOBBY_HEARTBEAT_INTERVAL
+
+		"join_game":
+			_lobby_game_id = str(response.get("game_id", ""))
+			_lobby_join_code = str(response.get("join_code", ""))
+			_lobby_peer_id = int(response.get("peer_id", 0))
+			var host_address = str(response.get("host_address", ""))
+			var host_port = int(response.get("host_port", SERVER_PORT))
+			var is_public = bool(response.get("is_public", false))
+			var max_players = int(response.get("max_players", MAX_PLAYERS))
+			_lobby_max_players = max_players
+			_lobby_is_public = is_public
+
+			# start join with lobby info (direct ENet to host)
+			_lobby_join_game(str(pending.extra.get("skin", "blue")), str(pending.extra.get("nickname", "Player")), host_address, host_port)
+			lobby_game_joined.emit(_lobby_game_id, _lobby_join_code, _lobby_peer_id, host_address, host_port, is_public, max_players)
+
+
+func _lobby_send_heartbeat() -> void:
+	if _lobby_game_id.is_empty() or not multiplayer.is_server():
+		return
+	var data = {"current_players": players.size()}
+	_lobby_post("/api/games/heartbeat", data, "heartbeat")
+
+
+func _lobby_report_address(address: String, port: int) -> void:
+	if _lobby_game_id.is_empty():
+		return
+	var data = {"address": address, "port": port}
+	_lobby_post("/api/games/%s/address" % _lobby_game_id, data, "report_address")
+
+
+func _lobby_process_relay() -> void:
+	if not _lobby_relay_ws:
+		return
+	var state = _lobby_relay_ws.get_ready_state()
+	if state == WebSocketPeer.STATE_OPEN:
+		# get binary messages (ENet packets)
+		while _lobby_relay_ws.get_available_packet_count() > 0:
+			var packet = _lobby_relay_ws.get_packet()
+			if packet.size() > 0:
+				# inject packet into ENet as if received from network
+				# this requires a custom multiplayer peer or we use the peer directly
+				pass
+		# send queued outbound packets
+		var peer = multiplayer.multiplayer_peer
+		if peer and peer is ENetMultiplayerPeer:
+			# TODO: we'd need to intercept outbound packets and send via WS
+			pass
+	elif state == WebSocketPeer.STATE_CLOSED:
+		_using_relay = false
+		connection_failed.emit()
+		lobby_error.emit("Relay connection closed")
+
+
+func _get_public_ip() -> void:
+	# TODO: use a STUN service or httpbin to get public IP
+	pass
 
 
 @rpc("any_peer", "reliable")

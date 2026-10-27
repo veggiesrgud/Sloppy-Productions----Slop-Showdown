@@ -1,0 +1,7 @@
+upload these 2 files only to alwaysdata:
+- main.py
+- requirements.txt
+
+set both paths to /home/collinsfamily/
+set env: PORT=8080
+click submit

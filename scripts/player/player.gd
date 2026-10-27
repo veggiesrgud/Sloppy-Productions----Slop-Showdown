@@ -1,4 +1,4 @@
-# player character - handles movement, shooting, ammo, reloading, and multiplayer sync
+# player stuff moving shooting ammo and taking hits
 class_name Character
 extends CharacterBody3D
 enum SkinColor { BLUE, YELLOW, GREEN, RED }
@@ -94,7 +94,7 @@ var is_collecting := false
 var shift_locked := true
 signal health_updated(health)
 var health: int = 100
-# ammo counts - current bullets in mag and reserve backup ammo
+# ammo counts current bullets in mag and reserve backup ammo
 var water_gun_ammo := WATER_GUN_MAGAZINE_SIZE
 var water_gun_reserve := 999
 var bazooka_ammo := 1
@@ -109,7 +109,7 @@ var gun_rest_rot: Dictionary = {}
 var _empty_click_count := 0
 # timer for showing the "press r to reload" message
 var _reload_prompt_timer := 0.0
-# tracks if R key is held down
+# tracks if r key is held down
 var _r_pressed := false
 # current movement speed
 var _current_speed: float
@@ -171,7 +171,8 @@ func _enter_tree():
 		return
 	set_multiplayer_authority(str(name).to_int())
 	$SpringArmOffset/SpringArm3D/Camera3D.current = is_multiplayer_authority()
-# attacker_id is only set for pvp kills
+# attackerid is only set for pvp kills
+# damage stuff applies hits and awards kills
 func damage(amount, attacker_id: int = 0):
 	var was_alive := health > 0
 	health -= int(amount)
@@ -195,7 +196,8 @@ func _play_death_sound() -> void:
 	if audio and audio.has_method("play"):
 		audio.play("sounds/enemy_destroy.ogg")
 @rpc("any_peer", "call_local", "reliable")
-# when this player gets hit by another player - applies damage and knockback
+# pvp hit stuff takes damage applies damage and knockback
+# pvp hit stuff takes damage from other players
 func take_pvp_hit(amount: float, attacker_id: int, knockback_dir: Vector3 = Vector3.ZERO, knockback_force: float = 0.0) -> void:
 	if attacker_id == get_multiplayer_authority():
 		return
@@ -206,7 +208,7 @@ func take_pvp_hit(amount: float, attacker_id: int, knockback_dir: Vector3 = Vect
 		kb.y = absf(kb.y) + knockback_force * 0.6
 		velocity = kb
 	damage(amount, attacker_id)
-# called when the player spawns - sets up inventory, skin, camera, and multiplayer
+# called when the player spawns sets up inventory skin camera and multiplayer
 func _ready():
 	add_to_group("player")
 	_ensure_shift_lock_action()
@@ -370,7 +372,7 @@ func _align_pickup_area_with_camera() -> void:
 	var pickup_rotation := _pickup_area.global_rotation
 	pickup_rotation.y = wrapf(_spring_arm_offset.global_rotation.y + _pickup_area_camera_yaw_offset, -PI, PI)
 	_pickup_area.global_rotation = pickup_rotation
-# press R to reload when out of ammo
+# press r to reload when out of ammo
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_R:
 		var weapon_id := _equipped_weapon_id()
@@ -381,7 +383,7 @@ func _input(event: InputEvent) -> void:
 			_empty_click_count = 0
 
 
-# every frame - handles reload timers, reload line UI, and ammo counter text
+# every frame handles reload timers reload line ui and ammo counter text
 func _physics_process(delta):
 	if water_gun_reload_timer > 0:
 		water_gun_reload_timer -= delta
@@ -525,7 +527,7 @@ func is_reloading(weapon_id: String) -> bool:
 		return bazooka_reload_timer > 0
 	return false
 
-# start the reload timer - refills mag from reserve when done
+# start the reload timer refills mag from reserve when done
 func start_reload(weapon_id: String) -> void:
 	if weapon_id == WATER_WEAPON_ID:
 		water_gun_reload_timer = 2.0
@@ -658,7 +660,7 @@ func _get_water_gun_muzzle(dir: Vector3) -> Vector3:
 		var mi := meshes[i] as MeshInstance3D
 		bounds = bounds.merge(mi.global_transform * mi.get_aabb())
 	return bounds.get_center() + dir * (bounds.size.length() * 0.25 + 0.05)
-# gun recoil kick when shooting - moves gun back then returns to rest
+# gun recoil kick when shooting moves gun back then returns to rest
 func _kick_held_weapon() -> void:
 	var weapon_id := _equipped_weapon_id()
 	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "WaterGun"))
@@ -671,7 +673,7 @@ func _kick_held_weapon() -> void:
 	var kick := create_tween()
 	kick.tween_property(weapon, "position", rest_position + Vector3(0, -0.03, 0.08), 0.05)
 	kick.tween_property(weapon, "position", rest_position, 0.1)
-# melee swing animation for non-gun weapons
+# melee swing animation for nongun weapons
 func _swing_held_weapon() -> void:
 	var weapon_id := _equipped_weapon_id()
 	var node_name := str(WEAPON_NODES_BY_ITEM.get(weapon_id, "WaterGun"))

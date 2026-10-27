@@ -73,6 +73,13 @@ theme_override_font_sizes/font_size = 26
 text = "LEADERBOARD"
 horizontal_alignment = 1
 
+[node name="CodeSubtitle" type="Label" parent="SafeArea/PositionContainer/Panel/MarginContainer/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+
 [node name="Count" type="Label" parent="SafeArea/PositionContainer/Panel/MarginContainer/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.68, 0.72, 1)

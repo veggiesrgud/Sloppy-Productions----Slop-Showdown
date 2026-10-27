@@ -1,3 +1,4 @@
+# leaderboard and kill tracking ui stuff
 class_name PlayerListUI
 extends Control
 
@@ -10,6 +11,7 @@ var _player_count := 0
 
 @onready var panel: PanelContainer = $SafeArea/PositionContainer/Panel
 @onready var count_label: Label = $SafeArea/PositionContainer/Panel/MarginContainer/Content/Count
+@onready var code_subtitle: Label = $SafeArea/PositionContainer/Panel/MarginContainer/Content/CodeSubtitle
 @onready var player_scroll: ScrollContainer = $SafeArea/PositionContainer/Panel/MarginContainer/Content/PlayerScroll
 @onready
 var players_label: RichTextLabel = $SafeArea/PositionContainer/Panel/MarginContainer/Content/PlayerScroll/Players
@@ -72,6 +74,11 @@ func refresh_players(players: Dictionary, local_peer_id: int) -> void:
 	_player_count = entries.size()
 
 	count_label.text = "%d players" % _player_count
+	# show the lobby host code on the leaderboard
+	var lobby_code := Network._lobby_join_code
+	if lobby_code.is_empty() and Network._lobby_is_public:
+		lobby_code = "Public"
+	code_subtitle.text = lobby_code
 	players_label.clear()
 	for index in range(entries.size()):
 		var entry: Dictionary = entries[index]
@@ -127,3 +134,4 @@ func _apply_panel_scale() -> void:
 
 func _escape_bbcode(text: String) -> String:
 	return text.replace("[", "[lb]")
+

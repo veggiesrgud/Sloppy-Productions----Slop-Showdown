@@ -1,3 +1,4 @@
+# level stuff spawning players chat and ui tab stuff
 extends Node3D
 # chat length and nickname stuff
 const MAX_CHAT_MESSAGE_LENGTH := 160
@@ -6,7 +7,7 @@ const MAX_NICKNAME_HEIGHT := 8.0
 
 @export var player_scene: PackedScene
 
-# make UIs not visable until key is pressed
+# make uis nnot visable until key is pressed
 var chat_visible := false
 var inventory_visible := false
 var player_list_visible := false
@@ -38,6 +39,7 @@ func _ready():
 
 	main_menu.host_pressed.connect(_on_host_pressed)
 	main_menu.join_pressed.connect(_on_join_pressed)
+	main_menu.join_by_code_pressed.connect(_on_join_by_code_pressed)
 	main_menu.quit_pressed.connect(_on_quit_pressed)
 	main_menu.refresh_servers_pressed.connect(_on_refresh_servers_pressed)
 	main_menu.add_server_pressed.connect(_on_add_server_pressed)
@@ -58,6 +60,12 @@ func _ready():
 	# refresh the leaderboard when kills change
 	Network.connect("leaderboard_changed", Callable(self, "_refresh_player_list"))
 	Network.connect("lan_servers_changed", Callable(self, "_on_lan_servers_changed"))
+	# lobby signals
+	Network.connect("lobby_game_created", Callable(self, "_on_lobby_game_created"))
+	Network.connect("lobby_game_joined", Callable(self, "_on_lobby_game_joined"))
+	Network.connect("lobby_peer_connected", Callable(self, "_on_lobby_peer_connected"))
+	Network.connect("lobby_peer_disconnected", Callable(self, "_on_lobby_peer_disconnected"))
+	Network.connect("lobby_error", Callable(self, "_on_lobby_error"))
 	multiplayer.peer_disconnected.connect(_remove_player)
 	Network.start_lan_discovery()
 	_refresh_server_list()
@@ -120,13 +128,14 @@ func after_ready():
 			var resolved := IP.resolve_hostname(str(OS.get_environment("HOSTNAME")), IP.TYPE_IPV4)
 			if not resolved.is_empty():
 				ip_address = resolved
-	main_menu.address_input.text = ip_address
+	# custom code hosting only - no IP display needed
+	main_menu.host_code_input.text = ""
 
 
 # called when the server disconnects everyone
 func _on_server_disconnected():
 	_reset_session_ui()
-# called when joining a server fails
+# join fails
 func _on_connection_failed() -> void:
 	_join_deadline_msec = 0
 	main_menu.set_status("Server not available")
@@ -165,7 +174,7 @@ func _reset_session_ui() -> void:
 	_update_mouse_mode()
 
 
-# called when another player joins the game
+# new player joins the game
 func _on_player_connected(peer_id, player_info):
 	var player = _add_player(peer_id, player_info)
 	if peer_id == multiplayer.get_unique_id() and player:
@@ -184,9 +193,9 @@ func _on_player_connected(peer_id, player_info):
 	_refresh_player_list()
 
 
-# clicked host button - starts hosting a game
-func _on_host_pressed(nickname: String, skin: String):
-	var error = Network.start_host(nickname, skin)
+# host button starts hosting a game
+func _on_host_pressed(nickname: String, skin: String, is_public: bool = true, custom_code: String = ""):
+	var error = Network.start_host(nickname, skin, is_public, custom_code)
 	if error:
 		push_warning("Failed to host game. Error: " + str(error))
 		main_menu.show_menu()
@@ -195,7 +204,7 @@ func _on_host_pressed(nickname: String, skin: String):
 	Network.stop_lan_discovery()
 
 
-# clicked join button - tries to connect to another players game
+# clicked join button tries to connect to another players game lan/direct ip
 func _on_join_pressed(nickname: String, skin: String, address: String):
 	var error = Network.join_game(nickname, skin, address)
 	if error:
@@ -207,6 +216,13 @@ func _on_join_pressed(nickname: String, skin: String, address: String):
 	Network.stop_lan_discovery()
 	main_menu.set_status("Connecting...")
 	_join_deadline_msec = Time.get_ticks_msec() + 8000
+
+
+# join by code internet via lobby server
+func _on_join_by_code_pressed(nickname: String, skin: String, join_code: String):
+	Network.join_by_code(join_code, nickname, skin)
+	main_menu.set_status("Joining via lobby...")
+	_join_deadline_msec = Time.get_ticks_msec() + 15000
 
 
 func _on_refresh_servers_pressed() -> void:
@@ -228,6 +244,50 @@ func _on_remove_server_pressed(address: String) -> void:
 
 func _on_lan_servers_changed(_servers: Array) -> void:
 	_refresh_server_list()
+
+
+# lobby signal handlers
+func _on_lobby_game_created(game_id: String, join_code: String, is_public: bool) -> void:
+	_show_join_code_popup(join_code, is_public)
+	_join_deadline_msec = 0
+
+
+func _show_join_code_popup(join_code: String, is_public: bool) -> void:
+	var dialog = ConfirmationDialog.new()
+	dialog.title = "Game Hosted!"
+	var mode_text = "Public (listed in server browser)" if is_public else "Private (join code only)"
+	var label = Label.new()
+	label.text = "Share this code with friends:\n\n[center][b][font_size=32]%s[/font_size][/b][/center]\n\n%s" % [join_code, mode_text]
+	label.bbcode_enabled = true
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dialog.add_child(label)
+	var copy_btn = Button.new()
+	copy_btn.text = "Copy to Clipboard"
+	copy_btn.pressed.connect(func(): DisplayServer.clipboard_set(join_code))
+	dialog.add_child(copy_btn)
+	dialog.get_ok_button().text = "Close"
+	dialog.popup_centered()
+	add_child(dialog)
+
+
+func _on_lobby_game_joined(game_id: String, join_code: String, peer_id: int, host_address: String, host_port: int, is_public: bool, max_players: int) -> void:
+	main_menu.set_status("Connected! Waiting for host...")
+	_join_deadline_msec = 0
+
+
+func _on_lobby_peer_connected(peer_id: int) -> void:
+	print("lobby peer connected: %d" % peer_id)
+
+
+func _on_lobby_peer_disconnected(peer_id: int) -> void:
+	print("lobby peer disconnected: %d" % peer_id)
+
+
+func _on_lobby_error(message: String) -> void:
+	push_warning("Lobby error: %s" % message)
+	main_menu.set_status("Error: %s" % message)
+	main_menu.show_menu()
+	_update_mouse_mode()
 
 
 func _refresh_server_list() -> void:
@@ -254,7 +314,7 @@ func _update_health_hud(health) -> void:
 		tween.tween_property(flash, "modulate:a", 0.0, 0.35)
 
 
-# spawn a player character in the game world
+# spawns the player
 func _add_player(id: int, player_info: Dictionary) -> Character:
 	if DisplayServer.get_name() == "headless" and id == 1:
 		return null
