@@ -47,7 +47,10 @@ var _lobby_peer_id: int = 0
 var _lobby_max_players: int = 0
 var _lobby_heartbeat_timer := 0.0
 var _lobby_http: HTTPRequest = null
-var _lobby_pending_requests: Dictionary = {}
+var _lobby_pending_queue: Array = []
+var _lobby_outbox: Array = []
+var _lobby_in_flight: bool = false
+var _lobby_in_flight_pending: Dictionary = {}
 
 
 func _ready() -> void:
@@ -102,14 +105,6 @@ func start_host(nickname: String, skin_color_str: String, is_public: bool = true
 	players[1] = player_info
 	player_connected.emit(1, player_info)
 	start_lan_broadcast(str(player_info["nick"]))
-
-	# register with lobby server
-	_lobby_is_public = is_public
-	_lobby_create_game(str(player_info["nick"]), is_public, custom_code)
-	# report our local address so clients can connect directly
-	var lan_ip := _local_lan_ip()
-	if not lan_ip.is_empty() and lan_ip != SERVER_ADDRESS:
-		_lobby_report_address(lan_ip, SERVER_PORT)
 
 
 # join stuff connects client to host by ip or lobby
@@ -246,13 +241,14 @@ func _finish_session() -> void:
 # lobby server integration
 # 
 
-func _lobby_create_game(host_name: String, is_public: bool, custom_code: String = "") -> void:
+func _lobby_create_game(host_name: String, is_public: bool, custom_code: String = "", host_address: String = "", host_port: int = SERVER_PORT) -> void:
 	var data = {
 		"name": host_name,
 		"host_name": host_name,
 		"is_public": is_public,
 		"max_players": MAX_PLAYERS,
-		"host_port": SERVER_PORT,
+		"host_port": host_port,
+		"host_address": host_address,
 	}
 	if not custom_code.is_empty():
 		data["custom_join_code"] = custom_code.strip_edges().to_upper()
@@ -299,24 +295,48 @@ func _lobby_join_game(skin_color_str: String, nickname: String, host_address: St
 func _lobby_post(path: String, data: Dictionary, action: String, extra: Dictionary = {}) -> void:
 	if not _lobby_http:
 		return
-	var headers = ["Content-Type: application/json"]
-	var body = JSON.stringify(data)
-	var request_id = str(Time.get_unix_time_from_system()) + "_" + str(randi())
-	_lobby_pending_requests[request_id] = {"action": action, "extra": extra}
-	_lobby_http.request(LOBBY_URL + path, headers, HTTPClient.METHOD_POST, body)
+	_lobby_outbox.append({"path": path, "data": data, "action": action, "extra": extra})
+	_lobby_try_send()
 
 
-func _on_lobby_response(request_id: int, response_code: int, headers: Array, body: PackedByteArray) -> void:
-	var key = str(request_id)
-	if not _lobby_pending_requests.has(key):
+func _lobby_try_send() -> void:
+	if _lobby_in_flight or _lobby_outbox.is_empty() or not _lobby_http:
 		return
-	var pending = _lobby_pending_requests[key]
-	_lobby_pending_requests.erase(key)
+	var item = _lobby_outbox.pop_front()
+	_lobby_in_flight = true
+	_lobby_in_flight_pending = {"action": item.action, "extra": item.extra}
+	var headers = ["Content-Type: application/json"]
+	var body = JSON.stringify(item.data)
+	var err = _lobby_http.request(LOBBY_URL + item.path, headers, HTTPClient.METHOD_POST, body)
+	if err != OK:
+		_lobby_in_flight = false
+		_lobby_in_flight_pending = {}
+		push_error("lobby request failed to start: %s" % err)
+		lobby_error.emit("%s: request failed" % item.action)
+		connection_failed.emit()
+		_lobby_try_send()
 
+
+func _on_lobby_response(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+	var pending = _lobby_in_flight_pending
+	_lobby_in_flight = false
+	_lobby_in_flight_pending = {}
+	_lobby_try_send()
+
+	if pending.is_empty():
+		return
 	var response_text = body.get_string_from_utf8()
-	var response: Dictionary = JSON.parse_string(response_text)
+	var response = JSON.parse_string(response_text)
+	if response == null or not (response is Dictionary):
+		response = {}
+
+	if result != 0:
+		# network error
+		connection_failed.emit()
+		lobby_error.emit("%s: network error" % pending.action)
+		return
 	if response_code < 200 or response_code >= 300:
-		var msg = response.get("detail", "Request failed")
+		var msg = str(response.get("detail", "Request failed"))
 		connection_failed.emit()
 		lobby_error.emit("%s: %s" % [pending.action, msg])
 		return

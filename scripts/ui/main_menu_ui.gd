@@ -13,7 +13,7 @@ const SAFE_AREA_MARGIN := 24.0
 @onready var skin_input: OptionButton = $MainContainer/MainMenu/Option2/SkinInput
 @onready var nick_input: LineEdit = $MainContainer/MainMenu/Option1/NickInput
 @onready var host_code_input: LineEdit = $MainContainer/MainMenu/Option3/HostCodeInput
-@onready var join_code_input: LineEdit = $MainContainer/MainMenu/Option4/JoinCodeInput
+@onready var ip_input: LineEdit = $MainContainer/MainMenu/Option4/JoinCodeInput
 @onready var public_toggle: CheckButton = $MainContainer/MainMenu/Option5/PublicToggle
 @onready var main_container: VBoxContainer = $MainContainer
 @onready var server_list: ItemList = $MainContainer/MainMenu/ServerSection/ServerList
@@ -39,10 +39,11 @@ func _on_join_pressed() -> void:
 	var address = get_join_address()
 	join_pressed.emit(nickname, skin, address)
 func _on_join_code_pressed() -> void:
+	# lan mode: join by typed ip
 	var nickname = nick_input.text.strip_edges()
 	var skin = get_skin()
-	var join_code = join_code_input.text.strip_edges()
-	join_by_code_pressed.emit(nickname, skin, join_code)
+	var address = ip_input.text.strip_edges()
+	join_pressed.emit(nickname, skin, address)
 func _on_quit_pressed():
 	quit_pressed.emit()
 func _on_refresh_pressed() -> void:
@@ -56,8 +57,7 @@ func _on_remove_server_pressed() -> void:
 func _on_server_selected(index: int) -> void:
 	pass
 func get_join_address() -> String:
-	# Using lobby join code, not direct IP
-	return ""
+	return ip_input.text.strip_edges()
 func get_selected_address() -> String:
 	return ""
 func set_server_list(entries: Array) -> void:

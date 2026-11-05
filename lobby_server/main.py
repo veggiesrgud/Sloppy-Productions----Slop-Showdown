@@ -162,6 +162,7 @@ class Handler(BaseHTTPRequestHandler):
             host_port = int(data.get("host_port", 8080))
         except (TypeError, ValueError):
             host_port = 8080
+        host_address = str(data.get("host_address", "")).strip()[:253]
         name = str(data.get("name", "")).strip()[:24] or "Slop Server"
 
         with _lock:
@@ -185,7 +186,7 @@ class Handler(BaseHTTPRequestHandler):
                 "is_public": is_public,
                 "max_players": max_players,
                 "host_port": host_port,
-                "address": "",
+                "address": host_address,
                 "current_players": 1,
                 "last_seen": time.monotonic(),
             }

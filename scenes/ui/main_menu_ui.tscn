@@ -152,12 +152,12 @@ alignment = 1
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 35
-text = "Join Code : "
+text = "Host IP : "
 
 [node name="JoinCodeInput" type="LineEdit" parent="MainContainer/MainMenu/Option4" unique_id=2119648066]
 layout_mode = 2
 theme_override_font_sizes/font_size = 35
-placeholder_text = "ABC123"
+placeholder_text = "192.168.1.5"
 alignment = 1
 expand_to_text_length = true
 
@@ -269,19 +269,6 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
 text = "JOIN"
 flat = true
 
-[node name="JoinByCode" type="Button" parent="MainContainer/MainMenu/Buttons" unique_id=1615937930]
-layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_colors/font_pressed_color = Color(0.42, 0.62, 0.82, 1)
-theme_override_colors/font_hover_color = Color(0.55, 0.75, 0.95, 1)
-theme_override_font_sizes/font_size = 35
-theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
-text = "JOIN BY CODE"
-flat = true
-
 [node name="Option6" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1327970814]
 layout_mode = 2
 size_flags_horizontal = 4
@@ -311,5 +298,4 @@ text = ""
 [connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Remove" to="." method="_on_remove_server_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Buttons/Host" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Buttons/Join" to="." method="_on_join_pressed"]
-[connection signal="pressed" from="MainContainer/MainMenu/Buttons/JoinByCode" to="." method="_on_join_code_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Option6/Quit" to="." method="_on_quit_pressed"]
