@@ -106,4 +106,3 @@ func get_skin() -> String:
 func set_status(text: String) -> void:
 	if status_label:
 		status_label.text = text
-

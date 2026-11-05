@@ -24,8 +24,7 @@ const DISCOVERY_INTERVAL: float = 1.0
 const DISCOVERY_EXPIRE: float = 6.0
 const SERVERS_CONFIG: String = "user://slop_servers.cfg"
 # lobby server change this to your deployed url
-const LOBBY_URL: String = "https://collinsfamily.alwaysdata.net"
-const LOBBY_WS_URL: String = "wss://collinsfamily.alwaysdata.net"
+const LOBBY_URL: String = "http://localhost:8080"
 const LOBBY_HEARTBEAT_INTERVAL: float = 10.0
 const LOBBY_GAME_TIMEOUT: float = 30.0
 
@@ -46,11 +45,9 @@ var _lobby_join_code: String = ""
 var _lobby_is_public := false
 var _lobby_peer_id: int = 0
 var _lobby_max_players: int = 0
-var _lobby_relay_ws: WebSocketPeer = null
 var _lobby_heartbeat_timer := 0.0
 var _lobby_http: HTTPRequest = null
 var _lobby_pending_requests: Dictionary = {}
-var _using_relay := false
 
 
 func _ready() -> void:
@@ -75,11 +72,6 @@ func _process(delta: float) -> void:
 	if _discovery_active and _discovery_socket:
 		_poll_lan_discovery()
 		_expire_lan_servers(delta)
-
-	# lobby relay polling
-	if _using_relay and _lobby_relay_ws:
-		_lobby_relay_ws.poll()
-		_lobby_process_relay()
 
 	# lobby heartbeat
 	if _lobby_game_id and multiplayer.is_server():
@@ -241,13 +233,11 @@ func _finish_session() -> void:
 	_session_active = false
 	multiplayer.multiplayer_peer = null
 	players.clear()
-	_lobby_disconnect_relay()
 	_lobby_game_id = ""
 	_lobby_join_code = ""
 	_lobby_is_public = false
 	_lobby_peer_id = 0
 	_lobby_max_players = 0
-	_using_relay = false
 	if had_session:
 		server_disconnected.emit()
 
@@ -305,32 +295,6 @@ func _lobby_join_game(skin_color_str: String, nickname: String, host_address: St
 	player_info["nick"] = sanitize_nickname(nickname, "Player_" + str(_lobby_peer_id))
 	player_info["skin"] = skin_str_to_e(skin_color_str)
 
-	# keep websocket connected for lobby events, but packets go direct
-	_lobby_connect_relay()
-
-
-func _lobby_connect_relay() -> void:
-	if _lobby_game_id.is_empty() or _lobby_peer_id == 0:
-		return
-	var ws_url = "%s/ws/relay/%s/%d" % [LOBBY_WS_URL, _lobby_game_id, _lobby_peer_id]
-	_lobby_relay_ws = WebSocketPeer.new()
-	var err = _lobby_relay_ws.connect_to_url(ws_url)
-	if err != OK:
-		push_error("Lobby relay connect failed: %s" % err)
-		connection_failed.emit()
-		lobby_error.emit("Failed to connect to relay server")
-		return
-
-	# poll the websocket in _process
-	_using_relay = true
-
-
-func _lobby_disconnect_relay() -> void:
-	if _lobby_relay_ws:
-		_lobby_relay_ws.close()
-		_lobby_relay_ws = null
-	_using_relay = false
-
 
 func _lobby_post(path: String, data: Dictionary, action: String, extra: Dictionary = {}) -> void:
 	if not _lobby_http:
@@ -387,7 +351,7 @@ func _on_lobby_response(request_id: int, response_code: int, headers: Array, bod
 func _lobby_send_heartbeat() -> void:
 	if _lobby_game_id.is_empty() or not multiplayer.is_server():
 		return
-	var data = {"current_players": players.size()}
+	var data = {"game_id": _lobby_game_id, "current_players": players.size()}
 	_lobby_post("/api/games/heartbeat", data, "heartbeat")
 
 
@@ -396,34 +360,6 @@ func _lobby_report_address(address: String, port: int) -> void:
 		return
 	var data = {"address": address, "port": port}
 	_lobby_post("/api/games/%s/address" % _lobby_game_id, data, "report_address")
-
-
-func _lobby_process_relay() -> void:
-	if not _lobby_relay_ws:
-		return
-	var state = _lobby_relay_ws.get_ready_state()
-	if state == WebSocketPeer.STATE_OPEN:
-		# get binary messages (ENet packets)
-		while _lobby_relay_ws.get_available_packet_count() > 0:
-			var packet = _lobby_relay_ws.get_packet()
-			if packet.size() > 0:
-				# inject packet into ENet as if received from network
-				# this requires a custom multiplayer peer or we use the peer directly
-				pass
-		# send queued outbound packets
-		var peer = multiplayer.multiplayer_peer
-		if peer and peer is ENetMultiplayerPeer:
-			# TODO: we'd need to intercept outbound packets and send via WS
-			pass
-	elif state == WebSocketPeer.STATE_CLOSED:
-		_using_relay = false
-		connection_failed.emit()
-		lobby_error.emit("Relay connection closed")
-
-
-func _get_public_ip() -> void:
-	# TODO: use a STUN service or httpbin to get public IP
-	pass
 
 
 @rpc("any_peer", "reliable")
