@@ -74,11 +74,14 @@ func refresh_players(players: Dictionary, local_peer_id: int) -> void:
 	_player_count = entries.size()
 
 	count_label.text = "%d players" % _player_count
-	# show the lobby host code on the leaderboard
+	# show the host join code on the leaderboard
 	var lobby_code := Network._lobby_join_code
-	if lobby_code.is_empty() and Network._lobby_is_public:
-		lobby_code = "Public"
-	code_subtitle.text = lobby_code
+	if lobby_code.is_empty() and multiplayer.is_server():
+		lobby_code = Network.ip_to_code(Network.get_local_ip())
+	if lobby_code.is_empty():
+		code_subtitle.text = ""
+	else:
+		code_subtitle.text = "code: %s" % lobby_code
 	players_label.clear()
 	for index in range(entries.size()):
 		var entry: Dictionary = entries[index]

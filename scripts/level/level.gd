@@ -128,11 +128,10 @@ func after_ready():
 			var resolved := IP.resolve_hostname(str(OS.get_environment("HOSTNAME")), IP.TYPE_IPV4)
 			if not resolved.is_empty():
 				ip_address = resolved
-	# custom code hosting only - no IP display needed
-	main_menu.host_code_input.text = ""
+	#custom code hosting
 
 
-# called when the server disconnects everyone
+#when the server disconnects everyone
 func _on_server_disconnected():
 	_reset_session_ui()
 # join fails
@@ -141,7 +140,7 @@ func _on_connection_failed() -> void:
 	main_menu.set_status("Server not available")
 
 
-# clears all players and items when leaving a game
+#clears all players and items when leaving a game
 func _reset_session_ui() -> void:
 	for child in players_container.get_children():
 		child.queue_free()
@@ -174,7 +173,7 @@ func _reset_session_ui() -> void:
 	_update_mouse_mode()
 
 
-# new player joins the game
+#new player joins the game
 func _on_player_connected(peer_id, player_info):
 	var player = _add_player(peer_id, player_info)
 	if peer_id == multiplayer.get_unique_id() and player:
@@ -193,7 +192,7 @@ func _on_player_connected(peer_id, player_info):
 	_refresh_player_list()
 
 
-# host button starts hosting a game
+#host button starts hosting a game
 func _on_host_pressed(nickname: String, skin: String, is_public: bool = true, custom_code: String = ""):
 	var error = Network.start_host(nickname, skin, is_public, custom_code)
 	if error:
@@ -202,11 +201,30 @@ func _on_host_pressed(nickname: String, skin: String, is_public: bool = true, cu
 		_update_mouse_mode()
 		return
 	Network.stop_lan_discovery()
+	# show the join code (encoded ip code - always reliable)
+	var lan_ip := Network.get_local_ip()
+	var code := Network.ip_to_code(lan_ip)
+	_show_join_code_popup(code, lan_ip, is_public)
 
 
-# clicked join button tries to connect to another players game lan/direct ip
+#clicked join button tries to connect to another players game lan/direct ip
 func _on_join_pressed(nickname: String, skin: String, address: String):
-	var error = Network.join_game(nickname, skin, address)
+	var typed = address.strip_edges()
+	if typed.is_empty():
+		main_menu.set_status("Enter a code")
+		return
+	var decoded = Network.code_to_ip(typed)
+	var target_ip = typed
+	if not decoded.is_empty():
+		target_ip = decoded
+	elif not typed.contains("."):
+		# try to find a lan host whose custom code matches
+		var host := Network.find_lan_host_by_code(typed)
+		if host.is_empty():
+			main_menu.set_status("Invalid code - use the code from the host's popup")
+			return
+		target_ip = str(host.get("address", typed))
+	var error = Network.join_game(nickname, skin, target_ip)
 	if error:
 		push_warning("Failed to join game. Error: " + str(error))
 		main_menu.set_status("Server not available")
@@ -218,7 +236,7 @@ func _on_join_pressed(nickname: String, skin: String, address: String):
 	_join_deadline_msec = Time.get_ticks_msec() + 8000
 
 
-# join by code internet via lobby server
+#join by code internet via lobby server
 func _on_join_by_code_pressed(nickname: String, skin: String, join_code: String):
 	Network.join_by_code(join_code, nickname, skin)
 	main_menu.set_status("Joining via lobby...")
@@ -246,20 +264,24 @@ func _on_lan_servers_changed(_servers: Array) -> void:
 	_refresh_server_list()
 
 
-# lobby signal handlers
+#lobby signal handlers
 func _on_lobby_game_created(game_id: String, join_code: String, is_public: bool) -> void:
-	_show_join_code_popup(join_code, is_public)
+	_show_join_code_popup(join_code, "", is_public)
 	_join_deadline_msec = 0
 
 
-func _show_join_code_popup(join_code: String, is_public: bool) -> void:
+func _show_join_code_popup(join_code: String, host_ip: String = "", is_public: bool = true) -> void:
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Game Hosted!"
-	var mode_text = "Public (listed in server browser)" if is_public else "Private (join code only)"
-	var label = Label.new()
-	label.text = "Share this code with friends:\n\n[center][b][font_size=32]%s[/font_size][/b][/center]\n\n%s" % [join_code, mode_text]
+	var mode_text = "Public (listed in server browser)" if is_public else "Private (code only)"
+	var ip_text = ""
+	if not host_ip.is_empty() and host_ip != "127.0.0.1":
+		ip_text = "\n\nHost IP: %s" % host_ip
+	var label = RichTextLabel.new()
 	label.bbcode_enabled = true
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.fit_content = true
+	label.scroll_active = false
+	label.text = "Share this code with friends:\n\n[center][b][font_size=32]%s[/font_size][/b][/center]\n\n%s%s" % [join_code, mode_text, ip_text]
 	dialog.add_child(label)
 	var copy_btn = Button.new()
 	copy_btn.text = "Copy to Clipboard"

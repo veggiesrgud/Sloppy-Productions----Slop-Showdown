@@ -12,8 +12,7 @@ const SKIN_OPTIONS: Array[String] = ["Blue", "Yellow", "Green", "Red"]
 const SAFE_AREA_MARGIN := 24.0
 @onready var skin_input: OptionButton = $MainContainer/MainMenu/Option2/SkinInput
 @onready var nick_input: LineEdit = $MainContainer/MainMenu/Option1/NickInput
-@onready var host_code_input: LineEdit = $MainContainer/MainMenu/Option3/HostCodeInput
-@onready var ip_input: LineEdit = $MainContainer/MainMenu/Option4/JoinCodeInput
+@onready var code_input: LineEdit = $MainContainer/MainMenu/Option3/CodeInput
 @onready var public_toggle: CheckButton = $MainContainer/MainMenu/Option5/PublicToggle
 @onready var main_container: VBoxContainer = $MainContainer
 @onready var server_list: ItemList = $MainContainer/MainMenu/ServerSection/ServerList
@@ -25,24 +24,19 @@ func _ready() -> void:
 		skin_input.add_item(skin_name)
 	skin_input.select(0)
 	public_toggle.button_pressed = true
+	code_input.text_changed.connect(_on_code_input_changed)
 	resized.connect(_update_responsive_layout)
 	call_deferred("_update_responsive_layout")
 func _on_host_pressed() -> void:
 	var nickname = nick_input.text.strip_edges()
 	var skin = get_skin()
 	var is_public = public_toggle.button_pressed
-	var custom_code = host_code_input.text.strip_edges()
+	var custom_code = code_input.text.strip_edges()
 	host_pressed.emit(nickname, skin, is_public, custom_code)
 func _on_join_pressed() -> void:
 	var nickname = nick_input.text.strip_edges()
 	var skin = get_skin()
 	var address = get_join_address()
-	join_pressed.emit(nickname, skin, address)
-func _on_join_code_pressed() -> void:
-	# lan mode: join by typed ip
-	var nickname = nick_input.text.strip_edges()
-	var skin = get_skin()
-	var address = ip_input.text.strip_edges()
 	join_pressed.emit(nickname, skin, address)
 func _on_quit_pressed():
 	quit_pressed.emit()
@@ -55,9 +49,25 @@ func _on_remove_server_pressed() -> void:
 	# Server list disabled - using lobby codes only
 	pass
 func _on_server_selected(index: int) -> void:
+	if index >= 0 and index < _server_entries.size():
+		var entry = _server_entries[index]
+		code_input.text = Network.ip_to_code(str(entry.get("address", "")))
+		_on_join_pressed()
 	pass
 func get_join_address() -> String:
-	return ip_input.text.strip_edges()
+	var typed = code_input.text.strip_edges()
+	var decoded = Network.code_to_ip(typed)
+	if not decoded.is_empty():
+		return decoded
+	return typed
+
+func _on_code_input_changed(_text: String) -> void:
+	var typed = code_input.text.strip_edges()
+	var decoded = Network.code_to_ip(typed)
+	if not decoded.is_empty():
+		set_status("Server found with this code")
+	elif typed.is_empty():
+		set_status("")
 func get_selected_address() -> String:
 	return ""
 func set_server_list(entries: Array) -> void:
@@ -76,7 +86,8 @@ func set_server_list(entries: Array) -> void:
 		if int(e.get("players", -1)) >= 0:
 			players_info = " (%d/%d)" % [int(e.get("players", 0)), int(e.get("max_players", 0))]
 		var tag := "[LAN]" if str(e.get("source", "")) == "lan" else "[SAVED]"
-		label = "%s %s - %s%s" % [tag, str(e.get("name", "")), str(e.get("address", "")), players_info]
+		var code_text := Network.ip_to_code(str(e.get("address", "")))
+		label = "%s %s - code: %s%s" % [tag, str(e.get("name", "")), code_text, players_info]
 		server_list.add_item(label)
 	for i in range(_server_entries.size()):
 		if str(_server_entries[i].get("address", "")) == prev_addr:

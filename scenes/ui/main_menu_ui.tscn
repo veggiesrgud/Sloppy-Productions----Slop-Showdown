@@ -73,7 +73,7 @@ layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 0
 theme_override_font_sizes/font_size = 70
-text = "Welcome to Sloppy Showdown!"
+text = "Welcome to Slop Shot!"
 
 [node name="MainMenu" type="VBoxContainer" parent="MainContainer" unique_id=792964549]
 layout_mode = 2
@@ -133,33 +133,15 @@ alignment = 1
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 35
-text = "Host Code : "
+text = "Code : "
 
-[node name="HostCodeInput" type="LineEdit" parent="MainContainer/MainMenu/Option3" unique_id=2119648066]
+[node name="CodeInput" type="LineEdit" parent="MainContainer/MainMenu/Option3" unique_id=2119648066]
 layout_mode = 2
 theme_override_font_sizes/font_size = 35
-placeholder_text = "MYCODE"
+placeholder_text = "Code"
 alignment = 1
 expand_to_text_length = true
 
-[node name="Option4" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1327970815]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="MainContainer/MainMenu/Option4" unique_id=492922166]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 35
-text = "Host IP : "
-
-[node name="JoinCodeInput" type="LineEdit" parent="MainContainer/MainMenu/Option4" unique_id=2119648066]
-layout_mode = 2
-theme_override_font_sizes/font_size = 35
-placeholder_text = "192.168.1.5"
-alignment = 1
-expand_to_text_length = true
 
 [node name="Option5" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1327970816]
 layout_mode = 2
@@ -176,7 +158,6 @@ text = "Public Game : "
 [node name="PublicToggle" type="CheckButton" parent="MainContainer/MainMenu/Option5" unique_id=2119648067]
 layout_mode = 2
 theme_override_font_sizes/font_size = 35
-text = ""
 
 [node name="HSeparator2" type="HSeparator" parent="MainContainer/MainMenu" unique_id=1512408463]
 layout_mode = 2
@@ -214,28 +195,6 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
 text = "REFRESH"
-flat = true
-
-[node name="Add" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=-877526124]
-layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
-text = "+ ADD IP"
-flat = true
-
-[node name="Remove" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=-877526123]
-layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
-text = "- REMOVE"
 flat = true
 
 [node name="Buttons" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1105640710]
@@ -285,17 +244,14 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
 text = "QUIT"
 flat = true
 
-[node name="StatusLabel" type="Label" parent="MainContainer/MainMenu"]
+[node name="StatusLabel" type="Label" parent="MainContainer/MainMenu" unique_id=1256763]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.35, 0.3, 1)
 theme_override_font_sizes/font_size = 28
 horizontal_alignment = 1
-text = ""
 
 [connection signal="item_selected" from="MainContainer/MainMenu/ServerSection/ServerList" to="." method="_on_server_selected"]
 [connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Refresh" to="." method="_on_refresh_pressed"]
-[connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Add" to="." method="_on_add_server_pressed"]
-[connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Remove" to="." method="_on_remove_server_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Buttons/Host" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Buttons/Join" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Option6/Quit" to="." method="_on_quit_pressed"]

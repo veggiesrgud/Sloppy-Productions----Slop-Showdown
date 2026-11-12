@@ -38,6 +38,7 @@ var _discovery_active := false
 var _broadcast_active := false
 var _broadcast_timer := 0.0
 var _server_display_name := ""
+var _custom_code := ""
 var _lan_seen: Dictionary = {}
 # lobby state
 var _lobby_game_id: String = ""
@@ -97,6 +98,8 @@ func start_host(nickname: String, skin_color_str: String, is_public: bool = true
 
 	player_info["nick"] = sanitize_nickname(nickname, "Host_" + str(multiplayer.get_unique_id()))
 	player_info["skin"] = skin_str_to_e(skin_color_str)
+	# store custom code for broadcast so lan peers can find us by code
+	_custom_code = custom_code.strip_edges().to_upper().replace("-", "").replace(" ", "")
 
 	if DisplayServer.get_name() == "headless":
 		start_lan_broadcast(str(player_info["nick"]))
@@ -232,6 +235,7 @@ func _finish_session() -> void:
 	_lobby_join_code = ""
 	_lobby_is_public = false
 	_lobby_peer_id = 0
+	_custom_code = ""
 	_lobby_max_players = 0
 	if had_session:
 		server_disconnected.emit()
@@ -510,6 +514,39 @@ func get_server_list() -> Array:
 	return combined
 
 
+func get_local_ip() -> String:
+	return _local_lan_ip()
+
+func ip_to_code(ip: String) -> String:
+	var parts = ip.split(".")
+	if parts.size() != 4:
+		return ""
+	var code := ""
+	for p in parts:
+		var n := int(p)
+		if n < 0 or n > 255:
+			return ""
+		code += "%02X" % n
+	return code
+
+func code_to_ip(code: String) -> String:
+	code = code.strip_edges().to_upper().replace("-", "").replace(" ", "")
+	if code.length() != 8:
+		return ""
+	var octets: Array = []
+	for i in range(4):
+		var chunk := code.substr(i * 2, 2)
+		var val := 0
+		for c in chunk:
+			var d := "0123456789ABCDEF".find(c)
+			if d < 0:
+				return ""
+			val = val * 16 + d
+		if val < 0 or val > 255:
+			return ""
+		octets.append(str(val))
+	return ".".join(octets)
+
 func _local_lan_ip() -> String:
 	for ip in IP.get_local_addresses():
 		if ip.begins_with("192.168.") or ip.begins_with("10.") or ip.begins_with("172."):
@@ -531,6 +568,7 @@ func _send_lan_broadcast() -> void:
 		str(players.size()),
 		str(MAX_PLAYERS),
 		str(SERVER_PORT),
+		_custom_code,
 	])
 	_broadcast_socket.put_packet(payload.to_utf8_buffer())
 
@@ -549,6 +587,7 @@ func _poll_lan_discovery() -> void:
 			"players": int(parts[3]),
 			"max_players": int(parts[4]),
 			"port": int(parts[5]),
+			"code": str(parts[6]) if parts.size() > 6 else "",
 			"age": 0.0,
 		}
 		if str(entry["address"]).is_empty():
@@ -579,6 +618,18 @@ func _rebuild_lan_list() -> void:
 	for key in _lan_seen:
 		lan_servers.append(_lan_seen[key])
 	lan_servers_changed.emit(lan_servers)
+
+
+# find a lan host by custom code
+func find_lan_host_by_code(code: String) -> Dictionary:
+	code = code.strip_edges().to_upper().replace("-", "").replace(" ", "")
+	if code.is_empty():
+		return {}
+	for key in _lan_seen:
+		var entry: Dictionary = _lan_seen[key]
+		if str(entry.get("code", "")) == code:
+			return entry
+	return {}
 
 
 func get_saved_servers() -> Array:
