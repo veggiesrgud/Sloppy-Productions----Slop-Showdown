@@ -1,0 +1,1 @@
+Our current plans are to create a 1v1 high knock-back shooter with sillier designs, leaning heavily into a cartoonish art style with heavy knockback effects on players and surroundings.
