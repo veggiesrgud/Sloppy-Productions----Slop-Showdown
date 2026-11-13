@@ -269,7 +269,7 @@ func _on_lobby_game_created(game_id: String, join_code: String, is_public: bool)
 	_show_join_code_popup(join_code, "", is_public)
 	_join_deadline_msec = 0
 
-
+#game hosting code
 func _show_join_code_popup(join_code: String, host_ip: String = "", is_public: bool = true) -> void:
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Game Hosted!"

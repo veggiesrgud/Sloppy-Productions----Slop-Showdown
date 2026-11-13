@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://dkm1105e287ho"]
+
+[ext_resource type="PackedScene" uid="uid://hmxso7c3tdha" path="res://models/fps-kit/environment/ground-textures/ambientcg/Ground037_2K-JPG/TheWalkThrough.glb" id="1_ewn4p"]
+[ext_resource type="PackedScene" uid="uid://cffjduipbb3s5" path="res://scenes/level/player.tscn" id="2_player"]
+[ext_resource type="Environment" uid="uid://jvmpkdwaeaq" path="res://scenes/main-environment.tres" id="3_env"]
+[ext_resource type="Script" uid="uid://c81tl2knpwndy" path="res://scripts/level/the_walk_through.gd" id="4_ctrl"]
+[ext_resource type="PackedScene" uid="uid://bclq8vh1x2goy" path="res://scenes/ui/inventory_ui.tscn" id="5_inv"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hotbar_ui.tscn" id="6_hotbar"]
+
+[node name="WalkThrough" type="Node3D" unique_id=1995900875]
+script = ExtResource("4_ctrl")
+
+[node name="InventoryUI" parent="." unique_id=1521782775 instance=ExtResource("5_inv")]
+
+[node name="HotbarUI" parent="." unique_id=1387949202 instance=ExtResource("6_hotbar")]
+
+[node name="TheWalkThrough" parent="." unique_id=1512860832 instance=ExtResource("1_ewn4p")]
+
+[node name="Player" parent="." unique_id=826417512 instance=ExtResource("2_player")]
+transform = Transform3D(0.39985886, 0, 0.91657674, 0, 1, 0, -0.91657674, 0, 0.39985886, -18.008553, 15.432263, -3.083968)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1102644324]
+environment = ExtResource("3_env")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=89770490]
+transform = Transform3D(-0.422618, -0.694272, 0.582563, 0, 0.642788, 0.766044, -0.906308, 0.323744, -0.271654, 0, 0, 0)
+shadow_enabled = true
+shadow_opacity = 0.75

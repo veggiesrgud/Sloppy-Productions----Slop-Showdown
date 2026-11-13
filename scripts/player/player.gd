@@ -155,8 +155,8 @@ var _rig_active := false
 @onready var _skeleton: Skeleton3D = get_node("GodotRobot3D/RobotArmature/Skeleton3D")
 @onready var _pickup_area: Area3D = $GodotRobot3D/InfrontArea3D
 @onready var _reload_line: ColorRect = $FirstPersonHUD/ReloadLine
-@onready var _ammo_label: Label = get_node("/root/Level/HUD/AmmoLabel")
-@onready var _reload_prompt: Label = get_node("/root/Level/HUD/ReloadPrompt")
+@onready var _ammo_label: Label = get_node_or_null("/root/Level/HUD/AmmoLabel")
+@onready var _reload_prompt: Label = get_node_or_null("/root/Level/HUD/ReloadPrompt")
 @onready var _first_person_hud: CanvasLayer = $FirstPersonHUD
 func _enter_tree():
 	if str(name) == "Player":
@@ -378,7 +378,8 @@ func _input(event: InputEvent) -> void:
 		var weapon_id := _equipped_weapon_id()
 		if get_ammo(weapon_id) <= 0 and not is_reloading(weapon_id):
 			start_reload(weapon_id)
-			_reload_prompt.text = ""
+			if _reload_prompt:
+				_reload_prompt.text = ""
 			_reload_prompt_timer = 0.0
 			_empty_click_count = 0
 
@@ -445,7 +446,8 @@ func _physics_process(delta):
 		if get_ammo(weapon_id) <= 0 and not is_reloading(weapon_id):
 			_empty_click_count += 1
 			if _empty_click_count >= 5:
-				_reload_prompt.text = "Press R to reload"
+				if _reload_prompt:
+					_reload_prompt.text = "Press R to reload"
 				_reload_prompt_timer = 5.0
 			return
 		_empty_click_count = 0
@@ -533,9 +535,11 @@ func start_reload(weapon_id: String) -> void:
 		water_gun_reload_timer = 2.0
 	elif weapon_id == BAZOOKA_WEAPON_ID:
 		bazooka_reload_timer = 5.0
-	_reload_prompt.text = ""
+	if _reload_prompt:
+		_reload_prompt.text = ""
 	_reload_prompt_timer = 0.0
 	_empty_click_count = 0
+
 
 func _on_animation_finished(animation_name: StringName) -> void:
 	match animation_name:
@@ -811,19 +815,23 @@ func _process(_delta):
 	var weapon_id := _equipped_weapon_id()
 	var ammo_text := ""
 	if _reload_prompt_timer > 0:
-		_ammo_label.text = ""
+		if _ammo_label:
+			_ammo_label.text = ""
 	else:
 		if weapon_id == WATER_WEAPON_ID:
 			ammo_text = str(water_gun_ammo) + " / " + str(WATER_GUN_MAGAZINE_SIZE) + "   " + str(water_gun_reserve)
 		elif weapon_id == BAZOOKA_WEAPON_ID:
 			ammo_text = str(bazooka_ammo) + " / 1   " + str(bazooka_reserve)
-		_ammo_label.text = ammo_text
+		if _ammo_label:
+			_ammo_label.text = ammo_text
 	if _reload_prompt_timer > 0:
 		_reload_prompt_timer -= _delta
 		if _reload_prompt_timer <= 0:
-			_reload_prompt.text = ""
+			if _reload_prompt:
+				_reload_prompt.text = ""
 	else:
-		_reload_prompt.text = ""
+		if _reload_prompt:
+			_reload_prompt.text = ""
 
 func _apply_aim_zoom(delta: float) -> void:
 	var cam := get_node_or_null("SpringArmOffset/SpringArm3D/Camera3D") as Camera3D

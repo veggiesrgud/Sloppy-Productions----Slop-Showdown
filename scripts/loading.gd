@@ -1,7 +1,7 @@
 extends Control
 
 
-@export var next_scene: String = "res://scenes/level/level.tscn"
+@export var next_scene: String = "res://scenes/modes.tscn"
 @export var load_time: float = 5.0
 @export var min_show_time: float = 1.0
 var time_left: float

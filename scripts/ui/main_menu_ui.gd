@@ -61,6 +61,7 @@ func get_join_address() -> String:
 		return decoded
 	return typed
 
+#the randomized code for muliplayer code
 func _on_code_input_changed(_text: String) -> void:
 	var typed = code_input.text.strip_edges()
 	var decoded = Network.code_to_ip(typed)
