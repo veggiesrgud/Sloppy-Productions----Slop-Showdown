@@ -5,6 +5,7 @@ signal host_pressed(nickname: String, skin: String, is_public: bool, custom_code
 signal join_pressed(nickname: String, skin: String, address: String)
 signal join_by_code_pressed(nickname: String, skin: String, join_code: String)
 signal quit_pressed
+signal back_pressed
 signal refresh_servers_pressed
 signal add_server_pressed(address: String)
 signal remove_server_pressed(address: String)
@@ -27,6 +28,8 @@ func _ready() -> void:
 	code_input.text_changed.connect(_on_code_input_changed)
 	resized.connect(_update_responsive_layout)
 	call_deferred("_update_responsive_layout")
+func _on_back_pressed() -> void:
+	back_pressed.emit()
 func _on_host_pressed() -> void:
 	var nickname = nick_input.text.strip_edges()
 	var skin = get_skin()

@@ -83,6 +83,19 @@ layout_direction = 1
 theme_override_constants/separation = 20
 alignment = 1
 
+[node name="BackToGameModes" type="Button" parent="MainContainer/MainMenu" unique_id=1809412123]
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_pressed_color = Color(0.42, 0.62, 0.82, 1)
+theme_override_colors/font_hover_color = Color(0.55, 0.75, 0.95, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
+text = "<- GAME MODES"
+flat = true
+
 [node name="HSeparator1" type="HSeparator" parent="MainContainer/MainMenu" unique_id=1429481219]
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -252,6 +265,7 @@ horizontal_alignment = 1
 
 [connection signal="item_selected" from="MainContainer/MainMenu/ServerSection/ServerList" to="." method="_on_server_selected"]
 [connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Refresh" to="." method="_on_refresh_pressed"]
+[connection signal="pressed" from="MainContainer/MainMenu/BackToGameModes" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Buttons/Host" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Buttons/Join" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="MainContainer/MainMenu/Option6/Quit" to="." method="_on_quit_pressed"]

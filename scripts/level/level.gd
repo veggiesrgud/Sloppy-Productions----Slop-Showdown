@@ -37,7 +37,9 @@ func _ready():
 	main_menu.show_menu()
 	multiplayer_chat.set_process_input(true)
 
-	main_menu.host_pressed.connect(_on_host_pressed)
+	if main_menu:
+		main_menu.host_pressed.connect(_on_host_pressed)
+		main_menu.back_pressed.connect(_on_back_to_game_modes_pressed)
 	main_menu.join_pressed.connect(_on_join_pressed)
 	main_menu.join_by_code_pressed.connect(_on_join_by_code_pressed)
 	main_menu.quit_pressed.connect(_on_quit_pressed)
@@ -384,6 +386,10 @@ func _remove_player(id):
 func _on_quit_pressed() -> void:
 	Network.leave_game()
 	get_tree().quit()
+
+func _on_back_to_game_modes_pressed() -> void:
+	Network.leave_game()
+	get_tree().change_scene_to_file("res://scenes/modes.tscn")
 
 
 func toggle_chat():
