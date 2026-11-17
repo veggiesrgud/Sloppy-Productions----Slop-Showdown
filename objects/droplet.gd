@@ -1,52 +1,42 @@
-# water droplet projectile - handles shooting, bouncing, and hitting players
 extends Area3D
 
-# how fast the droplet falls and how long it lasts before disappearing
 @export var droplet_gravity: float = 0.5
 @export var lifetime: float = 3.0
 
-# movement and damage values
 var speed: float = 25.0
 var damage: float = 15.0
 var velocity: Vector3
 var time_alive: float = 0.0
 
-# who shot this and if its from an enemy
 var is_enemy_shot: bool = false
 var shooter_id: int = 0
 var bounces: int = 0
 var exploded: bool = false
 
-# bazooka-specific settings for splash damage
 @export var is_bazooka := false
 @export var splash_damage := 35.0
 @export var splash_radius := 8.0
 @export var knockback_force := 25.0
 
-# how many times it can bounce before vanishing
 const MAX_BOUNCES: int = 2
 const BOUNCE_KEEP: float = 0.65
 
-# called when the droplet is created
 func _ready():
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
 	await get_tree().create_timer(lifetime).timeout
 	if is_inside_tree():
 		queue_free()
-# set up the droplet direction, speed, and damage
 func setup(direction: Vector3, p_speed: float, p_damage: float, p_shooter_id: int = 0):
 	speed = p_speed
 	damage = p_damage
 	shooter_id = p_shooter_id
 	velocity = direction * speed
-# set up enemy version of the droplet
 func setup_enemy(direction: Vector3, p_speed: float, p_damage: float):
 	is_enemy_shot = true
 	speed = p_speed
 	damage = p_damage
 	velocity = direction * speed
-# move the droplet every frame and check for wall hits
 func _physics_process(delta):
 	time_alive += delta
 	velocity.y -= droplet_gravity * delta
@@ -57,7 +47,6 @@ func _physics_process(delta):
 	if hit.is_empty():
 		global_position = target
 	elif is_bazooka:
-		# bazooka rockets explode on first contact instead of ricocheting
 		_explode_bazooka(hit["position"])
 		return
 	else:
@@ -66,7 +55,6 @@ func _physics_process(delta):
 		look_at(global_position + velocity.normalized(), Vector3.UP)
 
 
-# handle bouncing off walls
 func _bounce(normal: Vector3, at: Vector3) -> void:
 	bounces += 1
 	if bounces > MAX_BOUNCES:
@@ -78,7 +66,6 @@ func _bounce(normal: Vector3, at: Vector3) -> void:
 	if velocity.length() < 3.0 and velocity.length() > 0.01:
 		velocity = velocity.normalized() * 3.0
 	spawn_impact()
-# when something touches the droplet, deal damage or explode
 func _on_body_entered(body):
 	if is_bazooka:
 		_explode_bazooka(global_position, body)
@@ -117,14 +104,12 @@ func _on_body_entered(body):
 		spawn_impact()
 		queue_free()
 
-# bazooka explosion - deals full damage to the thing it hit and splash to nearby targets
 func _explode_bazooka(impact_pos: Vector3, hit_body: Node = null) -> void:
 	if exploded:
 		return
 	exploded = true
 	var my_id := shooter_id
 
-	# direct hit - full damage, no ricochet
 	if hit_body is Node3D:
 		if hit_body.is_in_group("player") or hit_body.name == "Player":
 			if not (multiplayer.has_multiplayer_peer() and hit_body.get_multiplayer_authority() == my_id):
@@ -135,7 +120,6 @@ func _explode_bazooka(impact_pos: Vector3, hit_body: Node = null) -> void:
 		elif hit_body.has_method("damage"):
 			hit_body.damage(damage)
 
-	# splash damage to nearby players
 	for player in get_tree().get_nodes_in_group("player"):
 		if player == hit_body:
 			continue
@@ -151,7 +135,6 @@ func _explode_bazooka(impact_pos: Vector3, hit_body: Node = null) -> void:
 			var dir := (player_3d.global_position - impact_pos).normalized()
 			player_3d.take_pvp_hit.rpc(splash_damage, my_id, dir, knockback_force)
 
-	# splash damage to nearby enemies too
 	for enemy in get_tree().get_nodes_in_group("enemy"):
 		if enemy == hit_body:
 			continue
@@ -164,7 +147,6 @@ func _explode_bazooka(impact_pos: Vector3, hit_body: Node = null) -> void:
 	_spawn_mini_explosion(impact_pos)
 	queue_free()
 
-# small expanding fireball + light flash for bazooka hits
 func _spawn_mini_explosion(at: Vector3) -> void:
 	var root := get_tree().current_scene
 	if root == null:

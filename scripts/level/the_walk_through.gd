@@ -8,20 +8,17 @@ var _inventory_visible := false
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	# hide the inventory on load
 	if _inventory_ui:
 		_inventory_ui.close_inventory()
-	# wire the pause menu
+		_inventory_ui.visible = false
 	if _pause_menu:
 		_pause_menu.resume_pressed.connect(_on_pause_resume_pressed)
 		_pause_menu.main_menu_pressed.connect(_on_pause_main_menu_pressed)
 		_pause_menu.quit_pressed.connect(_on_pause_quit_pressed)
-		# rename the menu button only in the tutorial
 		var main_menu_btn = get_node_or_null("PauseMenuUI/Overlay/Panel/MarginContainer/Buttons/MainMenu")
 		if main_menu_btn:
 			main_menu_btn.text = "MODES SCREEN"
 		_pause_menu.hide_menu()
-	# wire the inventory and hotbar to the player
 	var player = get_node_or_null("Player")
 	if player:
 		if _inventory_ui:
@@ -30,7 +27,6 @@ func _ready() -> void:
 		if _hotbar_ui:
 			_hotbar_ui.set_player(player)
 			_hotbar_ui.refresh()
-	# add trimesh collision to the map meshes
 	var map = get_node_or_null("TheWalkThrough")
 	if map:
 		_add_trimesh(map)
@@ -53,7 +49,8 @@ func _toggle_inventory() -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		else:
 			_inventory_ui.close_inventory()
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		_inventory_ui.visible = false
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		if _hotbar_ui:
 			_hotbar_ui.refresh()
 
@@ -77,6 +74,7 @@ func _handle_pause_action() -> void:
 func _close_inventory() -> void:
 	if _inventory_ui:
 		_inventory_ui.close_inventory()
+		_inventory_ui.visible = false
 	_inventory_visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if _hotbar_ui:

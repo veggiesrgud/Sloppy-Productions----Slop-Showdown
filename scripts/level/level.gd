@@ -1,13 +1,10 @@
-# level stuff spawning players chat and ui tab stuff
 extends Node3D
-# chat length and nickname stuff
 const MAX_CHAT_MESSAGE_LENGTH := 160
 const MIN_NICKNAME_HEIGHT := 2.0
 const MAX_NICKNAME_HEIGHT := 8.0
 
 @export var player_scene: PackedScene
 
-# make uis nnot visable until key is pressed
 var chat_visible := false
 var inventory_visible := false
 var player_list_visible := false
@@ -59,10 +56,8 @@ func _ready():
 	Network.server_disconnected.connect(_on_server_disconnected)
 	Network.connection_failed.connect(_on_connection_failed)
 	Network.connect("player_connected", Callable(self, "_on_player_connected"))
-	# refresh the leaderboard when kills change
 	Network.connect("leaderboard_changed", Callable(self, "_refresh_player_list"))
 	Network.connect("lan_servers_changed", Callable(self, "_on_lan_servers_changed"))
-	# lobby signals
 	Network.connect("lobby_game_created", Callable(self, "_on_lobby_game_created"))
 	Network.connect("lobby_game_joined", Callable(self, "_on_lobby_game_joined"))
 	Network.connect("lobby_peer_connected", Callable(self, "_on_lobby_peer_connected"))
@@ -130,19 +125,15 @@ func after_ready():
 			var resolved := IP.resolve_hostname(str(OS.get_environment("HOSTNAME")), IP.TYPE_IPV4)
 			if not resolved.is_empty():
 				ip_address = resolved
-	#custom code hosting
 
 
-#when the server disconnects everyone
 func _on_server_disconnected():
 	_reset_session_ui()
-# join fails
 func _on_connection_failed() -> void:
 	_join_deadline_msec = 0
 	main_menu.set_status("Server not available")
 
 
-#clears all players and items when leaving a game
 func _reset_session_ui() -> void:
 	for child in players_container.get_children():
 		child.queue_free()
@@ -175,7 +166,6 @@ func _reset_session_ui() -> void:
 	_update_mouse_mode()
 
 
-#new player joins the game
 func _on_player_connected(peer_id, player_info):
 	var player = _add_player(peer_id, player_info)
 	if peer_id == multiplayer.get_unique_id() and player:
@@ -194,7 +184,6 @@ func _on_player_connected(peer_id, player_info):
 	_refresh_player_list()
 
 
-#host button starts hosting a game
 func _on_host_pressed(nickname: String, skin: String, is_public: bool = true, custom_code: String = ""):
 	var error = Network.start_host(nickname, skin, is_public, custom_code)
 	if error:
@@ -203,13 +192,11 @@ func _on_host_pressed(nickname: String, skin: String, is_public: bool = true, cu
 		_update_mouse_mode()
 		return
 	Network.stop_lan_discovery()
-	# show the join code (encoded ip code - always reliable)
 	var lan_ip := Network.get_local_ip()
 	var code := Network.ip_to_code(lan_ip)
 	_show_join_code_popup(code, lan_ip, is_public)
 
 
-#clicked join button tries to connect to another players game lan/direct ip
 func _on_join_pressed(nickname: String, skin: String, address: String):
 	var typed = address.strip_edges()
 	if typed.is_empty():
@@ -220,7 +207,6 @@ func _on_join_pressed(nickname: String, skin: String, address: String):
 	if not decoded.is_empty():
 		target_ip = decoded
 	elif not typed.contains("."):
-		# try to find a lan host whose custom code matches
 		var host := Network.find_lan_host_by_code(typed)
 		if host.is_empty():
 			main_menu.set_status("Invalid code - use the code from the host's popup")
@@ -238,7 +224,6 @@ func _on_join_pressed(nickname: String, skin: String, address: String):
 	_join_deadline_msec = Time.get_ticks_msec() + 8000
 
 
-#join by code internet via lobby server
 func _on_join_by_code_pressed(nickname: String, skin: String, join_code: String):
 	Network.join_by_code(join_code, nickname, skin)
 	main_menu.set_status("Joining via lobby...")
@@ -266,12 +251,10 @@ func _on_lan_servers_changed(_servers: Array) -> void:
 	_refresh_server_list()
 
 
-#lobby signal handlers
 func _on_lobby_game_created(game_id: String, join_code: String, is_public: bool) -> void:
 	_show_join_code_popup(join_code, "", is_public)
 	_join_deadline_msec = 0
 
-#game hosting code
 func _show_join_code_popup(join_code: String, host_ip: String = "", is_public: bool = true) -> void:
 	var dialog = ConfirmationDialog.new()
 	dialog.title = "Game Hosted!"
@@ -338,7 +321,6 @@ func _update_health_hud(health) -> void:
 		tween.tween_property(flash, "modulate:a", 0.0, 0.35)
 
 
-# spawns the player
 func _add_player(id: int, player_info: Dictionary) -> Character:
 	if DisplayServer.get_name() == "headless" and id == 1:
 		return null

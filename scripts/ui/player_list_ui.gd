@@ -1,4 +1,3 @@
-# leaderboard and kill tracking ui stuff
 class_name PlayerListUI
 extends Control
 
@@ -62,7 +61,6 @@ func refresh_players(players: Dictionary, local_peer_id: int) -> void:
 				"kills": int(player_info.get("kills", 0)),
 			}
 		)
-	# sort by kills, highest first
 	entries.sort_custom(
 		func(a, b):
 			var a_kills := int(a["kills"])
@@ -74,7 +72,6 @@ func refresh_players(players: Dictionary, local_peer_id: int) -> void:
 	_player_count = entries.size()
 
 	count_label.text = "%d players" % _player_count
-	# show the host join code on the leaderboard
 	var lobby_code := Network._lobby_join_code
 	if lobby_code.is_empty() and multiplayer.is_server():
 		lobby_code = Network.ip_to_code(Network.get_local_ip())

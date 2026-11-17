@@ -1,4 +1,3 @@
-# network stuff lobby and multiplayer and kills tracking
 extends Node
 
 signal player_connected(peer_id, player_info)
@@ -6,7 +5,6 @@ signal server_disconnected
 signal connection_failed
 signal lan_servers_changed(servers: Array)
 signal leaderboard_changed
-# new lobby signals
 signal lobby_game_created(game_id: String, join_code: String, is_public: bool)
 signal lobby_game_joined(game_id: String, join_code: String, peer_id: int, host_address: String, host_port: int, is_public: bool, max_players: int)
 signal lobby_peer_connected(peer_id: int)
@@ -23,7 +21,6 @@ const DISCOVERY_MAGIC: String = "SLOP1"
 const DISCOVERY_INTERVAL: float = 1.0
 const DISCOVERY_EXPIRE: float = 6.0
 const SERVERS_CONFIG: String = "user://slop_servers.cfg"
-# lobby server change this to your deployed url
 const LOBBY_URL: String = "http://localhost:8080"
 const LOBBY_HEARTBEAT_INTERVAL: float = 10.0
 const LOBBY_GAME_TIMEOUT: float = 30.0
@@ -40,7 +37,6 @@ var _broadcast_timer := 0.0
 var _server_display_name := ""
 var _custom_code := ""
 var _lan_seen: Dictionary = {}
-# lobby state
 var _lobby_game_id: String = ""
 var _lobby_join_code: String = ""
 var _lobby_is_public := false
@@ -61,7 +57,6 @@ func _ready() -> void:
 	multiplayer.peer_connected.connect(_on_player_connected)
 	multiplayer.connected_to_server.connect(_on_connected_ok)
 
-	# setup lobby HTTP client
 	_lobby_http = HTTPRequest.new()
 	add_child(_lobby_http)
 	_lobby_http.request_completed.connect(_on_lobby_response)
@@ -77,7 +72,6 @@ func _process(delta: float) -> void:
 		_poll_lan_discovery()
 		_expire_lan_servers(delta)
 
-	# lobby heartbeat
 	if _lobby_game_id and multiplayer.is_server():
 		_lobby_heartbeat_timer -= delta
 		if _lobby_heartbeat_timer <= 0:
@@ -85,7 +79,6 @@ func _process(delta: float) -> void:
 			_lobby_send_heartbeat()
 
 
-# host stuff creates server and lobby entry
 func start_host(nickname: String, skin_color_str: String, is_public: bool = true, custom_code: String = ""):
 	var peer = ENetMultiplayerPeer.new()
 	var error = peer.create_server(SERVER_PORT, MAX_PLAYERS)
@@ -98,7 +91,6 @@ func start_host(nickname: String, skin_color_str: String, is_public: bool = true
 
 	player_info["nick"] = sanitize_nickname(nickname, "Host_" + str(multiplayer.get_unique_id()))
 	player_info["skin"] = skin_str_to_e(skin_color_str)
-	# store custom code for broadcast so lan peers can find us by code
 	_custom_code = custom_code.strip_edges().to_upper().replace("-", "").replace(" ", "")
 
 	if DisplayServer.get_name() == "headless":
@@ -110,7 +102,6 @@ func start_host(nickname: String, skin_color_str: String, is_public: bool = true
 	start_lan_broadcast(str(player_info["nick"]))
 
 
-# join stuff connects client to host by ip or lobby
 func join_game(nickname: String, skin_color_str: String, address: String = SERVER_ADDRESS):
 	address = sanitize_address(address)
 	if address.is_empty():
@@ -155,15 +146,12 @@ func _register_player(new_player_info):
 	if players.has(new_player_id):
 		return
 	var sanitized_info = sanitize_player_info(new_player_info, "Player_" + str(new_player_id))
-	# new players start at zero
 	sanitized_info["kills"] = 0
 	players[new_player_id] = sanitized_info
 	player_connected.emit(new_player_id, sanitized_info)
 	_sync_registered_player.rpc(new_player_id, sanitized_info)
 
 
-# server tracks kills so clients can't change them
-# kill tracking stuff only server changes kills
 func register_kill(peer_id: int) -> void:
 	if not multiplayer.is_server():
 		return
@@ -241,9 +229,6 @@ func _finish_session() -> void:
 		server_disconnected.emit()
 
 
-# 
-# lobby server integration
-# 
 
 func _lobby_create_game(host_name: String, is_public: bool, custom_code: String = "", host_address: String = "", host_port: int = SERVER_PORT) -> void:
 	var data = {
@@ -274,10 +259,9 @@ func join_by_code(join_code: String, nickname: String, skin_color_str: String) -
 
 
 func _lobby_join_game(skin_color_str: String, nickname: String, host_address: String = "", host_port: int = SERVER_PORT) -> void:
-	# direct ENet connection to host (relay disabled for reliability)
 	var target_address = host_address.strip_edges()
 	if target_address.is_empty():
-		target_address = SERVER_ADDRESS  # fallback to localhost for LAN
+		target_address = SERVER_ADDRESS
 	var target_port = host_port if host_port > 0 else SERVER_PORT
 
 	var peer = ENetMultiplayerPeer.new()
@@ -335,7 +319,6 @@ func _on_lobby_response(result: int, response_code: int, headers: PackedStringAr
 		response = {}
 
 	if result != 0:
-		# network error
 		connection_failed.emit()
 		lobby_error.emit("%s: network error" % pending.action)
 		return
@@ -353,7 +336,6 @@ func _on_lobby_response(result: int, response_code: int, headers: PackedStringAr
 			_lobby_peer_id = 1
 			_lobby_max_players = MAX_PLAYERS
 			lobby_game_created.emit(_lobby_game_id, _lobby_join_code, _lobby_is_public)
-			# start heartbeat
 			_lobby_heartbeat_timer = LOBBY_HEARTBEAT_INTERVAL
 
 		"join_game":
@@ -367,7 +349,6 @@ func _on_lobby_response(result: int, response_code: int, headers: PackedStringAr
 			_lobby_max_players = max_players
 			_lobby_is_public = is_public
 
-			# start join with lobby info (direct ENet to host)
 			_lobby_join_game(str(pending.extra.get("skin", "blue")), str(pending.extra.get("nickname", "Player")), host_address, host_port)
 			lobby_game_joined.emit(_lobby_game_id, _lobby_join_code, _lobby_peer_id, host_address, host_port, is_public, max_players)
 
@@ -620,7 +601,6 @@ func _rebuild_lan_list() -> void:
 	lan_servers_changed.emit(lan_servers)
 
 
-# find a lan host by custom code
 func find_lan_host_by_code(code: String) -> Dictionary:
 	code = code.strip_edges().to_upper().replace("-", "").replace(" ", "")
 	if code.is_empty():

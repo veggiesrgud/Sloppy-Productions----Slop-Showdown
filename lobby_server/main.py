@@ -1,5 +1,3 @@
-# lobby server - pure python no packages needed
-# tracks hosted games so players can join by code
 import json
 import os
 import random
@@ -8,9 +6,7 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-# games expire if host stops heartbeating (host sends every 10 sec)
 GAMES_EXPIRE_SECONDS = 45.0
-# join codes use these chars only (no confusing ones like O/0/I/1)
 CODE_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 CODE_LENGTH = 6
 MAX_PLAYERS_LIMIT = 10
@@ -28,7 +24,6 @@ def make_code(length):
 
 
 def clean_custom_code(raw):
-    # custom codes become uppercase letters and numbers
     code = str(raw).strip().upper()
     if not code:
         return ""
@@ -43,7 +38,6 @@ def clean_custom_code(raw):
 
 
 def find_game(game_id=None, join_code=None):
-    # must be called with the lock held
     now = time.monotonic()
     for game_id_to_check in list(_games):
         if now - _games[game_id_to_check]["last_seen"] > GAMES_EXPIRE_SECONDS:
@@ -63,7 +57,6 @@ class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
     def log_message(self, fmt, *args):
-        # quiet logs
         return
 
     def send_json(self, status, data):
@@ -89,7 +82,6 @@ class Handler(BaseHTTPRequestHandler):
             return {}
         return data if isinstance(data, dict) else {}
 
-    # ---- pages ----
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -119,18 +111,15 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/games/heartbeat":
             self.heartbeat(parsed)
             return
-        # /api/games/{game_id}/address
         if path.startswith("/api/games/") and path.endswith("/address"):
             game_id = path[len("/api/games/"):-len("/address")]
             self.report_address(urllib.parse.unquote(game_id))
             return
         if path.startswith("/ws/relay/"):
-            # relay disabled game clients connect direct to host
             self.send_json(400, {"detail": "Relay disabled, clients connect direct"})
             return
         self.send_json(404, {"detail": "Not found"})
 
-    # ---- endpoints ----
 
     def list_games(self):
         with _lock:
@@ -166,7 +155,6 @@ class Handler(BaseHTTPRequestHandler):
         name = str(data.get("name", "")).strip()[:24] or "Slop Server"
 
         with _lock:
-            # custom code wins if free otherwise generate one
             code = clean_custom_code(data.get("custom_join_code", ""))
             if code:
                 for game in _games.values():
@@ -238,7 +226,6 @@ class Handler(BaseHTTPRequestHandler):
                     game["last_seen"] = time.monotonic()
                     if current_players >= 0:
                         game["current_players"] = current_players
-            # no game_id still ok so client never errors
         self.send_json(200, {"ok": True})
 
     def report_address(self, game_id):

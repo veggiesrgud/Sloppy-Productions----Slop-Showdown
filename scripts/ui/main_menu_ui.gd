@@ -1,4 +1,3 @@
-# menu stuff hosting joining and server list stuff
 class_name MainMenuUI
 extends Control
 signal host_pressed(nickname: String, skin: String, is_public: bool, custom_code: String)
@@ -46,10 +45,8 @@ func _on_quit_pressed():
 func _on_refresh_pressed() -> void:
 	refresh_servers_pressed.emit()
 func _on_add_server_pressed() -> void:
-	# Server list disabled - using lobby codes only
 	pass
 func _on_remove_server_pressed() -> void:
-	# Server list disabled - using lobby codes only
 	pass
 func _on_server_selected(index: int) -> void:
 	if index >= 0 and index < _server_entries.size():
@@ -64,7 +61,6 @@ func get_join_address() -> String:
 		return decoded
 	return typed
 
-#the randomized code for muliplayer code
 func _on_code_input_changed(_text: String) -> void:
 	var typed = code_input.text.strip_edges()
 	var decoded = Network.code_to_ip(typed)
