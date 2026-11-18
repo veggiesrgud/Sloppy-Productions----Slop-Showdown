@@ -10,12 +10,12 @@ signal add_server_pressed(address: String)
 signal remove_server_pressed(address: String)
 const SKIN_OPTIONS: Array[String] = ["Blue", "Yellow", "Green", "Red"]
 const SAFE_AREA_MARGIN := 24.0
-@onready var skin_input: OptionButton = $MainContainer/MainMenu/Option2/SkinInput
-@onready var nick_input: LineEdit = $MainContainer/MainMenu/Option1/NickInput
-@onready var code_input: LineEdit = $MainContainer/MainMenu/Option3/CodeInput
-@onready var public_toggle: CheckButton = $MainContainer/MainMenu/Option5/PublicToggle
+@onready var skin_input: OptionButton = $Option2/SkinInput
+@onready var nick_input: LineEdit = $Option1/NickInput
+@onready var code_input: LineEdit = $Option3/CodeInput
+@onready var public_toggle: CheckButton = $Option5/PublicToggle
 @onready var main_container: VBoxContainer = $MainContainer
-@onready var server_list: ItemList = $MainContainer/MainMenu/ServerSection/ServerList
+@onready var server_list: ItemList = $ServerSection/ServerList
 @onready var status_label: Label = $MainContainer/MainMenu/StatusLabel
 var _server_entries: Array = []
 func _ready() -> void:

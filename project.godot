@@ -8,6 +8,11 @@
 
 config_version=5
 
+[GD-Sync]
+
+version="1.0.2"
+uniqueUsername=true
+
 [animation]
 
 compatibility/default_parent_skeleton_in_mesh_instance_3d=true
@@ -26,6 +31,7 @@ boot_splash/image="res://splash-screen.png"
 Audio="*res://scripts/audio.gd"
 Network="*res://scripts/autoload/network.gd"
 ItemDatabase="*res://scripts/autoload/item_database.gd"
+GDSync="*res://addons/GD-Sync/MultiplayerClient.gd"
 
 [display]
 
@@ -38,6 +44,10 @@ window/stretch/aspect="expand"
 
 movie_writer/movie_file="D:/Godot/test.avi"
 movie_writer/mjpeg_quality=1.0
+
+[editor_plugins]
+
+enabled=PackedStringArray("GD-Sync")
 
 [filesystem]
 

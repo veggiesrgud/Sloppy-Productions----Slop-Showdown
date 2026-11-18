@@ -1,6 +1,7 @@
 extends Control
 
 var _panel: VBoxContainer = null
+var _gdsync_status: Label = null
 
 func _ready() -> void:
 	var bg = ColorRect.new()
@@ -33,6 +34,14 @@ func _ready() -> void:
 	panel.visible = false
 	add_child(panel)
 	_panel = panel
+	if Engine.has_singleton("GDSync") or get_node_or_null("/root/GDSync"):
+		var status = Label.new()
+		status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		status.add_theme_font_size_override("font_size", 16)
+		status.name = "GDSyncStatus"
+		status.text = "GD-Sync: connecting..."
+		panel.add_child(status)
+		_gdsync_status = status
 
 	var title = Label.new()
 	title.text = "GAME MODES"
@@ -63,6 +72,19 @@ func _ready() -> void:
 			sound.play()
 	else:
 		_show_panel(panel)
+
+	var gd = get_node_or_null("/root/GDSync")
+	if gd:
+		gd.connected.connect(func(): if _gdsync_status: _gdsync_status.text = "GD-Sync: online")
+		gd.connection_failed.connect(func(err):
+			if _gdsync_status:
+				if err == 0:
+					_gdsync_status.text = "GD-Sync: invalid key"
+				elif err == 1:
+					_gdsync_status.text = "GD-Sync: timeout"
+				else:
+					_gdsync_status.text = "GD-Sync: port in use")
+		gd.start_multiplayer()
 
 func _make_button(text: String, color: Color) -> Button:
 	var btn = Button.new()

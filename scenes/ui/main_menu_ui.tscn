@@ -1,9 +1,12 @@
 [gd_scene format=3 uid="uid://bx7mq8t8hjn7q"]
 
+[ext_resource type="Texture2D" uid="uid://bvd8bmol6gpn4" path="res://scenes/ui/Screenshot_2026-11-16_201023.webp" id="2_3bauu"]
 [ext_resource type="Script" uid="uid://wfj6b11wkwx2" path="res://scripts/ui/main_menu_ui.gd" id="2_script"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_npnbc"]
 color = Color(0, 0, 0, 0)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_button_focus"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_button_normal"]
 content_margin_left = 12.0
@@ -33,8 +36,6 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_button_focus"]
-
 [node name="MainMenuUI" type="Control" unique_id=1809417860]
 layout_mode = 3
 anchors_preset = 15
@@ -44,15 +45,10 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_script")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=702505842]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -17.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.0901961, 0.0901961, 0.0901961, 1)
+[node name="Screenshot20261116201023" type="Sprite2D" parent="." unique_id=1880895343]
+position = Vector2(642.99994, 357.50003)
+scale = Vector2(0.80598956, 0.84837955)
+texture = ExtResource("2_3bauu")
 
 [node name="MainContainer" type="VBoxContainer" parent="." unique_id=473263213]
 layout_mode = 1
@@ -68,13 +64,6 @@ grow_vertical = 2
 theme_override_constants/separation = 50
 alignment = 1
 
-[node name="Label" type="Label" parent="MainContainer" unique_id=293700381]
-layout_mode = 2
-size_flags_horizontal = 6
-size_flags_vertical = 0
-theme_override_font_sizes/font_size = 70
-text = "Welcome to Slop Shot!"
-
 [node name="MainMenu" type="VBoxContainer" parent="MainContainer" unique_id=792964549]
 layout_mode = 2
 size_flags_horizontal = 4
@@ -83,154 +72,75 @@ layout_direction = 1
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="BackToGameModes" type="Button" parent="MainContainer/MainMenu" unique_id=1809412123]
-layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_colors/font_pressed_color = Color(0.42, 0.62, 0.82, 1)
-theme_override_colors/font_hover_color = Color(0.55, 0.75, 0.95, 1)
-theme_override_font_sizes/font_size = 28
-theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
-text = "<- GAME MODES"
-flat = true
-
 [node name="HSeparator1" type="HSeparator" parent="MainContainer/MainMenu" unique_id=1429481219]
 layout_mode = 2
 theme_override_constants/separation = 10
 theme_override_styles/separator = SubResource("StyleBoxLine_npnbc")
-
-[node name="Option1" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=414194156]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="MainContainer/MainMenu/Option1" unique_id=848326644]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 35
-text = "Nickname : "
-
-[node name="NickInput" type="LineEdit" parent="MainContainer/MainMenu/Option1" unique_id=1087637066]
-layout_mode = 2
-theme_override_font_sizes/font_size = 35
-placeholder_text = "YourNick"
-max_length = 20
-expand_to_text_length = true
-
-[node name="Option2" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1404573203]
-layout_mode = 2
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="MainContainer/MainMenu/Option2" unique_id=1101934130]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 35
-text = "Player Skin : "
-
-[node name="SkinInput" type="OptionButton" parent="MainContainer/MainMenu/Option2" unique_id=2039868006]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 35
-
-[node name="Option3" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1469914367]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="MainContainer/MainMenu/Option3" unique_id=492922165]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 35
-text = "Code : "
-
-[node name="CodeInput" type="LineEdit" parent="MainContainer/MainMenu/Option3" unique_id=2119648066]
-layout_mode = 2
-theme_override_font_sizes/font_size = 35
-placeholder_text = "Code"
-alignment = 1
-expand_to_text_length = true
-
-
-[node name="Option5" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1327970816]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="MainContainer/MainMenu/Option5" unique_id=492922167]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 35
-text = "Public Game : "
-
-[node name="PublicToggle" type="CheckButton" parent="MainContainer/MainMenu/Option5" unique_id=2119648067]
-layout_mode = 2
-theme_override_font_sizes/font_size = 35
 
 [node name="HSeparator2" type="HSeparator" parent="MainContainer/MainMenu" unique_id=1512408463]
 layout_mode = 2
 theme_override_constants/separation = 30
 theme_override_styles/separator = SubResource("StyleBoxLine_npnbc")
 
-[node name="ServerSection" type="VBoxContainer" parent="MainContainer/MainMenu" unique_id=-877526129]
+[node name="StatusLabel" type="Label" parent="MainContainer/MainMenu" unique_id=1256763]
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.3, 1)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+
+[node name="ServerSection" type="VBoxContainer" parent="." unique_id=-877526129]
+layout_mode = 0
+offset_left = 390.0
+offset_top = 305.0
+offset_right = 890.0
+offset_bottom = 445.0
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="ServerLabel" type="Label" parent="MainContainer/MainMenu/ServerSection" unique_id=-877526128]
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "Active Servers:"
-horizontal_alignment = 1
-
-[node name="ServerList" type="ItemList" parent="MainContainer/MainMenu/ServerSection" unique_id=-877526127]
+[node name="ServerList" type="ItemList" parent="ServerSection" unique_id=-877526127]
 custom_minimum_size = Vector2(500, 140)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
 
-[node name="ServerButtons" type="HBoxContainer" parent="MainContainer/MainMenu/ServerSection" unique_id=-877526126]
-layout_mode = 2
-theme_override_constants/separation = 16
+[node name="Option6" type="HBoxContainer" parent="." unique_id=1327970814]
+layout_mode = 0
+offset_left = 570.0
+offset_top = 580.0
+offset_right = 718.0
+offset_bottom = 626.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
 alignment = 1
 
-[node name="Refresh" type="Button" parent="MainContainer/MainMenu/ServerSection/ServerButtons" unique_id=-877526125]
+[node name="Quit" type="Button" parent="Option6" unique_id=1022123460]
 layout_mode = 2
 mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0.858824, 0, 0, 0.862745)
+theme_override_colors/font_hover_color = Color(0.858807, 4.71681e-06, 1.15514e-06, 0.862745)
+theme_override_font_sizes/font_size = 35
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
-text = "REFRESH"
+text = "QUIT"
 flat = true
 
-[node name="Buttons" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1105640710]
-layout_mode = 2
+[node name="Buttons" type="HBoxContainer" parent="." unique_id=1105640710]
+layout_mode = 0
+offset_left = 384.0
+offset_top = 409.0
+offset_right = 864.0
+offset_bottom = 455.0
 theme_override_constants/separation = 30
 alignment = 1
 
-[node name="Host" type="Button" parent="MainContainer/MainMenu/Buttons" unique_id=18102936]
-layout_mode = 2
+[node name="Join" type="Button" parent="." unique_id=1615937929]
+layout_mode = 0
+offset_left = 698.0
+offset_top = 439.0
+offset_right = 842.0
+offset_bottom = 485.0
 mouse_default_cursor_shape = 2
-theme_override_colors/font_pressed_color = Color(0.42, 0.62, 0.82, 1)
-theme_override_colors/font_hover_color = Color(0.55, 0.75, 0.95, 1)
-theme_override_font_sizes/font_size = 35
-theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
-text = "HOST"
-flat = true
-
-[node name="Join" type="Button" parent="MainContainer/MainMenu/Buttons" unique_id=1615937929]
-layout_mode = 2
-mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0.42, 0.62, 0.82, 1)
 theme_override_colors/font_hover_color = Color(0.55, 0.75, 0.95, 1)
 theme_override_font_sizes/font_size = 35
@@ -241,31 +151,174 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
 text = "JOIN"
 flat = true
 
-[node name="Option6" type="HBoxContainer" parent="MainContainer/MainMenu" unique_id=1327970814]
+[node name="Host" type="Button" parent="." unique_id=18102936]
+layout_mode = 0
+offset_left = 473.0
+offset_top = 440.0
+offset_right = 587.0
+offset_bottom = 486.0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0.42, 0.62, 0.82, 1)
+theme_override_colors/font_hover_color = Color(0.55, 0.75, 0.95, 1)
+theme_override_font_sizes/font_size = 35
+theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
+text = "HOST"
+flat = true
+
+[node name="ServerLabel" type="Label" parent="." unique_id=-877526128]
+layout_mode = 0
+offset_left = 305.0
+offset_top = 281.0
+offset_right = 595.0
+offset_bottom = 311.0
+offset_transform_enabled = true
+offset_transform_scale = Vector2(0.71, 0.71)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 28
+text = "Active Servers:"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ServerButtons" type="HBoxContainer" parent="." unique_id=-877526126]
+layout_mode = 0
+offset_left = 535.0
+offset_top = 440.0
+offset_right = 767.0
+offset_bottom = 474.0
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Refresh" type="Button" parent="ServerButtons" unique_id=-877526125]
 layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
+text = "REFRESH"
+flat = true
+
+[node name="Option5" type="HBoxContainer" parent="." unique_id=1327970816]
+layout_mode = 0
+offset_left = 503.0
+offset_top = 485.0
+offset_right = 836.0
+offset_bottom = 523.0
 size_flags_horizontal = 4
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Quit" type="Button" parent="MainContainer/MainMenu/Option6" unique_id=1022123460]
+[node name="Label" type="Label" parent="Option5" unique_id=492922167]
 layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_colors/font_pressed_color = Color(0.858824, 0, 0, 0.862745)
-theme_override_colors/font_hover_color = Color(0.858807, 4.71681e-06, 1.15514e-06, 0.862745)
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 35
+text = "Public Game : "
+
+[node name="PublicToggle" type="CheckButton" parent="Option5" unique_id=2119648067]
+layout_mode = 2
+theme_override_font_sizes/font_size = 35
+
+[node name="Option3" type="HBoxContainer" parent="." unique_id=1469914367]
+layout_mode = 0
+offset_left = 485.0
+offset_top = 250.0
+offset_right = 813.0
+offset_bottom = 296.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Option3" unique_id=492922165]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 35
+text = "Code : "
+
+[node name="CodeInput" type="LineEdit" parent="Option3" unique_id=2119648066]
+layout_mode = 2
+theme_override_font_sizes/font_size = 35
+placeholder_text = "Code"
+alignment = 1
+expand_to_text_length = true
+
+[node name="Option2" type="HBoxContainer" parent="." unique_id=1404573203]
+layout_mode = 0
+offset_left = 418.0
+offset_top = 531.0
+offset_right = 918.0
+offset_bottom = 569.0
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Option2" unique_id=1101934130]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 35
+text = "Player Skin : "
+
+[node name="SkinInput" type="OptionButton" parent="Option2" unique_id=2039868006]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 35
+
+[node name="Option1" type="HBoxContainer" parent="." unique_id=414194156]
+layout_mode = 0
+offset_left = 447.0
+offset_top = 193.0
+offset_right = 829.0
+offset_bottom = 239.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Option1" unique_id=848326644]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 35
+text = "Nickname : "
+
+[node name="NickInput" type="LineEdit" parent="Option1" unique_id=1087637066]
+layout_mode = 2
+theme_override_font_sizes/font_size = 35
+placeholder_text = "YourNick"
+max_length = 20
+expand_to_text_length = true
+
+[node name="BackToGameModes" type="Button" parent="." unique_id=1809412123]
+layout_mode = 0
+offset_left = -13.0
+offset_top = 7.0
+offset_right = 361.0
+offset_bottom = 53.0
+offset_transform_enabled = true
+offset_transform_scale = Vector2(1.305, 1.305)
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
-text = "QUIT"
+text = "<- GAME MODES"
 flat = true
 
-[node name="StatusLabel" type="Label" parent="MainContainer/MainMenu" unique_id=1256763]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.35, 0.3, 1)
-theme_override_font_sizes/font_size = 28
-horizontal_alignment = 1
-
-[connection signal="item_selected" from="MainContainer/MainMenu/ServerSection/ServerList" to="." method="_on_server_selected"]
-[connection signal="pressed" from="MainContainer/MainMenu/ServerSection/ServerButtons/Refresh" to="." method="_on_refresh_pressed"]
-[connection signal="pressed" from="MainContainer/MainMenu/BackToGameModes" to="." method="_on_back_pressed"]
-[connection signal="pressed" from="MainContainer/MainMenu/Buttons/Host" to="." method="_on_host_pressed"]
-[connection signal="pressed" from="MainContainer/MainMenu/Buttons/Join" to="." method="_on_join_pressed"]
-[connection signal="pressed" from="MainContainer/MainMenu/Option6/Quit" to="." method="_on_quit_pressed"]
+[connection signal="item_selected" from="ServerSection/ServerList" to="." method="_on_server_selected"]
+[connection signal="pressed" from="Option6/Quit" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="Join" to="." method="_on_join_pressed"]
+[connection signal="pressed" from="Host" to="." method="_on_host_pressed"]
+[connection signal="pressed" from="ServerButtons/Refresh" to="." method="_on_refresh_pressed"]
+[connection signal="pressed" from="BackToGameModes" to="." method="_on_back_pressed"]
