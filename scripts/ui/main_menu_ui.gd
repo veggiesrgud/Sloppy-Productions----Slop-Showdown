@@ -1,6 +1,7 @@
 class_name MainMenuUI
 extends Control
 signal host_pressed(nickname: String, skin: String, is_public: bool, custom_code: String)
+signal quick_play_matched
 signal join_pressed(nickname: String, skin: String, address: String)
 signal join_by_code_pressed(nickname: String, skin: String, join_code: String)
 signal quit_pressed
@@ -18,7 +19,9 @@ const SAFE_AREA_MARGIN := 24.0
 @onready var server_list: ItemList = $ServerSection/ServerList
 @onready var status_label: Label = $MainContainer/MainMenu/StatusLabel
 var _server_entries: Array = []
+var _quick_play_intent := false
 func _ready() -> void:
+	_wire_gdsync()
 	skin_input.clear()
 	for skin_name in SKIN_OPTIONS:
 		skin_input.add_item(skin_name)
@@ -29,6 +32,63 @@ func _ready() -> void:
 	call_deferred("_update_responsive_layout")
 func _on_back_pressed() -> void:
 	back_pressed.emit()
+
+func _wire_gdsync() -> void:
+	var gd = get_node_or_null("/root/GDSync")
+	if gd:
+		if not gd.connected.is_connected(_on_gdsync_connected):
+			gd.connected.connect(_on_gdsync_connected)
+		if not gd.connection_failed.is_connected(_on_gdsync_failed):
+			gd.connection_failed.connect(_on_gdsync_failed)
+		if not gd.lobby_joined.is_connected(_on_gdsync_lobby_joined):
+			gd.lobby_joined.connect(_on_gdsync_lobby_joined)
+		if not gd.lobby_join_failed.is_connected(_on_gdsync_lobby_join_failed):
+			gd.lobby_join_failed.connect(_on_gdsync_lobby_join_failed)
+		if not gd.matchmaking_failed.is_connected(_on_gdsync_matchmaking_failed):
+			gd.matchmaking_failed.connect(_on_gdsync_matchmaking_failed)
+
+func _on_quick_play_pressed() -> void:
+	_quick_play_intent = true
+	var gd = get_node_or_null("/root/GDSync")
+	if gd:
+		var nick := nick_input.text.strip_edges()
+		var skin := get_skin()
+		if not nick.is_empty():
+			gd.player_set_data("nick", nick)
+		gd.player_set_data("skin", skin)
+	set_status("searching for a match...")
+	if gd:
+		if gd.is_active():
+			_start_matchmaking()
+		else:
+			gd.start_multiplayer()
+
+func _start_matchmaking() -> void:
+	var req := MatchmakingRequest.new(4)
+	req.set_min_players(2)
+	GDSync.matchmaking_start(req)
+
+func _on_gdsync_connected() -> void:
+	if _quick_play_intent:
+		_start_matchmaking()
+
+func _on_gdsync_failed(err: int) -> void:
+	if err == 0:
+		set_status("GD-Sync: invalid key")
+	elif err == 1:
+		set_status("GD-Sync: timeout")
+	else:
+		set_status("GD-Sync: port in use")
+
+func _on_gdsync_lobby_joined(_lobby_name: String) -> void:
+	set_status("match found! entering the arena...")
+	quick_play_matched.emit()
+
+func _on_gdsync_lobby_join_failed(_lobby_name: String, error: int) -> void:
+	set_status("join failed: " + str(error))
+
+func _on_gdsync_matchmaking_failed(error: int) -> void:
+	set_status("matchmaking failed: " + str(error))
 func _on_host_pressed() -> void:
 	var nickname = nick_input.text.strip_edges()
 	var skin = get_skin()

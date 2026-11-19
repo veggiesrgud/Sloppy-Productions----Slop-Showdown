@@ -14,6 +14,7 @@ var _nickname_heights_requested := false
 var _nickname_height_requesters: Dictionary = {}
 var _last_local_health := 100
 var _join_deadline_msec := 0
+var _quick_play_session := false
 
 @onready var players_container: Node3D = $PlayersContainer
 @onready var main_menu: MainMenuUI = $MainMenuUI
@@ -26,6 +27,13 @@ var _join_deadline_msec := 0
 
 func _ready():
 	after_ready()
+	var gd_chat := get_node_or_null("/root/GDSync")
+	if gd_chat:
+		gd_chat.expose_func(Callable(self, "show_chat_message"))
+		if not gd_chat.client_joined.is_connected(_on_gdsync_client_joined):
+			gd_chat.client_joined.connect(_on_gdsync_client_joined)
+		if not gd_chat.client_left.is_connected(_on_gdsync_client_left):
+			gd_chat.client_left.connect(_on_gdsync_client_left)
 
 	if DisplayServer.get_name() == "headless":
 		Network.start_host("", "")
@@ -37,6 +45,8 @@ func _ready():
 	if main_menu:
 		main_menu.host_pressed.connect(_on_host_pressed)
 		main_menu.back_pressed.connect(_on_back_to_game_modes_pressed)
+		if main_menu.has_signal("quick_play_matched") and not main_menu.quick_play_matched.is_connected(_on_quick_play_matched):
+			main_menu.quick_play_matched.connect(_on_quick_play_matched)
 	main_menu.join_pressed.connect(_on_join_pressed)
 	main_menu.join_by_code_pressed.connect(_on_join_by_code_pressed)
 	main_menu.quit_pressed.connect(_on_quit_pressed)
@@ -183,6 +193,114 @@ func _on_player_connected(peer_id, player_info):
 		call_deferred("_request_nickname_heights")
 	_refresh_player_list()
 
+
+func _on_gdsync_client_joined(_client_id: int) -> void:
+	if not _quick_play_session:
+		return
+	_spawn_online_players()
+
+func _on_gdsync_client_left(client_id: int) -> void:
+	if not _quick_play_session:
+		return
+	var node_name := str(client_id)
+	if players_container.has_node(node_name):
+		players_container.get_node(node_name).queue_free()
+
+func _on_quick_play_matched() -> void:
+	_quick_play_session = true
+	_join_deadline_msec = 0
+	main_menu.set_status("")
+	main_menu.hide_menu()
+	_spawn_online_players()
+	_update_mouse_mode()
+
+func _leave_online_session() -> void:
+	if not _quick_play_session:
+		return
+	_quick_play_session = false
+	var gd := get_node_or_null("/root/GDSync")
+	if gd:
+		gd.lobby_leave()
+
+func _spawn_online_players() -> void:
+	var gd := get_node_or_null("/root/GDSync")
+	if gd == null:
+		return
+	var clients: Array = gd.lobby_get_all_clients()
+	var my_id := int(gd.get_client_id())
+	if not clients.has(my_id):
+		clients.append(my_id)
+	clients.sort()
+	var slot_index := 0
+	for cid in clients:
+		_add_online_player(int(cid), slot_index)
+		slot_index += 1
+	var local := _get_local_player()
+	if local:
+		if not local.health_updated.is_connected(_on_local_health_updated):
+			local.health_updated.connect(_on_local_health_updated)
+		_last_local_health = local.health
+		call_deferred("_update_health_hud", local.health)
+	call_deferred("update_local_inventory_display")
+
+const ONLINE_SPAWN_SLOTS: Array[Vector3] = [
+	Vector3(-10, 1.0, -8),
+	Vector3(10, 1.0, 8),
+	Vector3(10, 1.0, -8),
+	Vector3(-10, 1.0, 8),
+	Vector3(0, 1.0, -12),
+	Vector3(0, 1.0, 12),
+]
+
+func _add_online_player(client_id: int, slot_index: int = 0) -> Character:
+	if players_container.has_node(str(client_id)):
+		return players_container.get_node(str(client_id)) as Character
+	var gd := get_node_or_null("/root/GDSync")
+	var player = player_scene.instantiate()
+	player.name = str(client_id)
+	player.set("gdsync_online", true)
+	player.set("gdsync_client_id", client_id)
+	var spawn := ONLINE_SPAWN_SLOTS[slot_index % ONLINE_SPAWN_SLOTS.size()]
+	player.position = spawn
+	players_container.add_child(player, true)
+	player.set("_spawn_point", player.global_position)
+
+	var nick := "Player_" + str(client_id)
+	var skin_name := "blue"
+	if gd:
+		nick = str(gd.player_get_data(client_id, "nick", nick))
+		skin_name = str(gd.player_get_data(client_id, "skin", skin_name))
+	nick = Network.sanitize_nickname(nick, "Player_" + str(client_id))
+	player.nickname.text = nick
+	var skin_enum = Network.sanitize_skin_value(skin_name)
+	player.set_player_skin(skin_enum)
+
+	var sync := PropertySynchronizer.new()
+	sync.name = "GDSyncSync"
+	sync.node_path = ".."
+	sync.properties = PackedStringArray(["position"])
+	sync.broadcast = PropertySynchronizer.BROADCAST_MODE.WHEN_OWNER
+	sync.process = PropertySynchronizer.PROCESS_MODE.PHYSICS_PROCESS
+	sync.refresh_rate = 30
+	sync.interpolated = true
+	sync.interpolation_speed = 35.0
+	player.add_child(sync)
+	if gd:
+		gd.set_gdsync_owner(sync, client_id)
+
+	var rot_sync := PropertySynchronizer.new()
+	rot_sync.name = "GDSyncRotSync"
+	rot_sync.node_path = "../GodotRobot3D"
+	rot_sync.properties = PackedStringArray(["rotation"])
+	rot_sync.broadcast = PropertySynchronizer.BROADCAST_MODE.WHEN_OWNER
+	rot_sync.process = PropertySynchronizer.PROCESS_MODE.PHYSICS_PROCESS
+	rot_sync.refresh_rate = 30
+	rot_sync.interpolated = true
+	rot_sync.interpolation_speed = 35.0
+	player.add_child(rot_sync)
+	if gd:
+		gd.set_gdsync_owner(rot_sync, client_id)
+	return player
 
 func _on_host_pressed(nickname: String, skin: String, is_public: bool = true, custom_code: String = ""):
 	var error = Network.start_host(nickname, skin, is_public, custom_code)
@@ -366,10 +484,12 @@ func _remove_player(id):
 
 
 func _on_quit_pressed() -> void:
+	_leave_online_session()
 	Network.leave_game()
 	get_tree().quit()
 
 func _on_back_to_game_modes_pressed() -> void:
+	_leave_online_session()
 	Network.leave_game()
 	get_tree().change_scene_to_file("res://scenes/modes.tscn")
 
@@ -416,6 +536,12 @@ func _on_chat_message_sent(message_text: String) -> void:
 	if trimmed_message.is_empty():
 		return
 
+	if _quick_play_session:
+		var gd := get_node_or_null("/root/GDSync")
+		if gd:
+			var nick := str(gd.player_get_data(gd.get_client_id(), "nick", "Player"))
+			gd.call_func_all(Callable(self, "show_chat_message"), nick, trimmed_message)
+		return
 	if multiplayer.is_server():
 		_broadcast_chat_message(multiplayer.get_unique_id(), trimmed_message)
 	else:
@@ -614,7 +740,7 @@ func _update_mouse_mode() -> void:
 		main_menu.is_menu_visible()
 		or pause_menu.is_menu_visible()
 		or inventory_visible
-		or not multiplayer.has_multiplayer_peer()
+		or (not multiplayer.has_multiplayer_peer() and not _quick_play_session)
 	)
 	if ui_requires_cursor:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -628,12 +754,14 @@ func _on_pause_resume_pressed() -> void:
 
 func _on_pause_main_menu_pressed() -> void:
 	_hide_pause_menu(false)
+	_leave_online_session()
 	Network.leave_game()
 	if not main_menu.is_menu_visible():
 		_reset_session_ui()
 
 
 func _on_pause_quit_pressed() -> void:
+	_leave_online_session()
 	Network.leave_game()
 	get_tree().quit()
 
@@ -647,6 +775,14 @@ func update_local_inventory_display():
 
 
 func _get_local_player() -> Character:
+	if _quick_play_session:
+		var gd := get_node_or_null("/root/GDSync")
+		var cid := -1
+		if gd:
+			cid = int(gd.get_client_id())
+		if cid >= 0 and players_container.has_node(str(cid)):
+			return players_container.get_node(str(cid)) as Character
+		return null
 	var local_player_id = multiplayer.get_unique_id()
 	if players_container.has_node(str(local_player_id)):
 		return players_container.get_node(str(local_player_id)) as Character

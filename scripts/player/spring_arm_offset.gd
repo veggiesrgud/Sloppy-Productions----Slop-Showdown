@@ -26,7 +26,11 @@ func _process(_delta: float) -> void:
 		_spring_arm.global_position = _first_person_anchor.global_position
 func _unhandled_input(event: InputEvent) -> void:
 	var parent_player = get_parent()
-	if parent_player and str(parent_player.name) == "Player":
+	if parent_player and parent_player.get("gdsync_online") == true:
+		var gd = get_node_or_null("/root/GDSync")
+		if gd == null or int(parent_player.get("gdsync_client_id")) != gd.get_client_id():
+			return
+	elif parent_player and str(parent_player.name) == "Player":
 		pass
 	elif not multiplayer.has_multiplayer_peer():
 		pass

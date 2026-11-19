@@ -73,6 +73,8 @@ const SKIN_TINTS := {
 @export var green_texture: CompressedTexture2D
 @export var red_texture: CompressedTexture2D
 var player_inventory: PlayerInventory
+var gdsync_online := false
+var gdsync_client_id := -1
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var can_double_jump = true
 var has_double_jumped = false
@@ -129,6 +131,14 @@ var _rig_active := false
 @onready var _reload_prompt: Label = get_node_or_null("/root/Level/HUD/ReloadPrompt")
 @onready var _first_person_hud: CanvasLayer = $FirstPersonHUD
 func _enter_tree():
+	if gdsync_online:
+		if gdsync_client_id == GDSync.get_client_id():
+			set_multiplayer_authority(1)
+			if has_node("SpringArmOffset/SpringArm3D/Camera3D"):
+				$SpringArmOffset/SpringArm3D/Camera3D.current = true
+		else:
+			set_multiplayer_authority(0)
+		return
 	if str(name) == "Player":
 		set_multiplayer_authority(1)
 		if has_node("SpringArmOffset/SpringArm3D/Camera3D"):
@@ -174,8 +184,25 @@ func take_pvp_hit(amount: float, attacker_id: int, knockback_dir: Vector3 = Vect
 		kb.y = absf(kb.y) + knockback_force * 0.6
 		velocity = kb
 	damage(amount, attacker_id)
+func gdsync_take_hit(amount: float, attacker_id: int, knockback_dir: Vector3 = Vector3.ZERO, knockback_force: float = 0.0) -> void:
+	if amount <= 0.0 or amount > 100.0:
+		return
+	if knockback_force > 0.0 and knockback_dir != Vector3.ZERO:
+		var kb := knockback_dir.normalized() * knockback_force
+		kb.y = absf(kb.y) + knockback_force * 0.6
+		velocity = kb
+	damage(amount, attacker_id)
+
+func gdsync_play_animation(state: StringName) -> void:
+	if not ALLOWED_ANIMATION_STATES.has(state):
+		return
+	_body.play_animation_state(state, true)
+
 func _ready():
 	add_to_group("player")
+	if gdsync_online:
+		GDSync.expose_func(Callable(self, "gdsync_take_hit"))
+		GDSync.expose_func(Callable(self, "gdsync_play_animation"))
 	_ensure_shift_lock_action()
 	setup_body_rig()
 	if not multiplayer.has_multiplayer_peer():
@@ -195,7 +222,7 @@ func _ready():
 	_body.play_animation_state(&"Idle")
 	_set_nickname_height(BASE_NICKNAME_HEIGHT)
 	call_deferred("_update_nickname_height")
-	if not multiplayer.is_server():
+	if not gdsync_online and not multiplayer.is_server():
 		call_deferred("_request_equipment_appearance")
 	if _spring_arm_offset:
 		_spring_arm_offset.is_first_person = true
@@ -208,6 +235,8 @@ func _ready():
 		_on_camera_perspective_changed(true)
 		nickname.visible = false
 func _is_local_main_player() -> bool:
+	if gdsync_online:
+		return gdsync_client_id == GDSync.get_client_id()
 	return str(name) == "Player" or not multiplayer.has_multiplayer_peer() or is_multiplayer_authority()
 func _on_camera_perspective_changed(first_person: bool) -> void:
 	if _rig_root:
@@ -338,6 +367,8 @@ func _align_pickup_area_with_camera() -> void:
 	pickup_rotation.y = wrapf(_spring_arm_offset.global_rotation.y + _pickup_area_camera_yaw_offset, -PI, PI)
 	_pickup_area.global_rotation = pickup_rotation
 func _input(event: InputEvent) -> void:
+	if gdsync_online and gdsync_client_id != GDSync.get_client_id():
+		return
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_R:
 		var weapon_id := _equipped_weapon_id()
 		if get_ammo(weapon_id) <= 0 and not is_reloading(weapon_id):
@@ -349,6 +380,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _physics_process(delta):
+	if gdsync_online and gdsync_client_id != GDSync.get_client_id():
+		return
 	if water_gun_reload_timer > 0:
 		water_gun_reload_timer -= delta
 		if water_gun_reload_timer <= 0:
@@ -519,6 +552,10 @@ func _perform_melee_attack() -> void:
 			node.damage(MELEE_DAMAGE)
 		_play_melee_hit(node as Node3D)
 	var my_id := multiplayer.get_unique_id()
+	if gdsync_online:
+		var gd := get_node_or_null("/root/GDSync")
+		if gd:
+			my_id = gd.get_client_id()
 	for node in get_tree().get_nodes_in_group("player"):
 		if node == self:
 			continue
@@ -529,7 +566,14 @@ func _perform_melee_attack() -> void:
 		var target := (node as Node3D).global_position
 		if origin.distance_to(target) > MELEE_RANGE:
 			continue
-		node.take_pvp_hit.rpc(MELEE_DAMAGE, my_id)
+		if node.get("gdsync_online") == true:
+			var victim_id := int(node.get("gdsync_client_id"))
+			var gd := get_node_or_null("/root/GDSync")
+			if gd == null or victim_id == my_id:
+				continue
+			gd.call_func_on(victim_id, Callable(node, "gdsync_take_hit"), MELEE_DAMAGE, my_id)
+		else:
+			node.take_pvp_hit.rpc(MELEE_DAMAGE, my_id)
 		_play_melee_hit(node as Node3D)
 func _play_melee_hit(target: Node3D) -> void:
 	var impact := MELEE_IMPACT_SCENE.instantiate() as Node3D
@@ -583,8 +627,13 @@ func _aim_at_crosshair(cam: Camera3D, dir: Vector3, muzzle: Vector3) -> Vector3:
 	return dir
 func _spawn_droplet(muzzle: Vector3, shot_dir: Vector3, droplet_scene: PackedScene = null, p_speed: float = WATER_SPEED, p_damage: float = WATER_DAMAGE, is_bazooka: bool = false) -> void:
 	var droplet = (droplet_scene if droplet_scene else DROPLET_SCENE).instantiate()
+	var shooter_id := multiplayer.get_unique_id()
+	if gdsync_online:
+		var gd = get_node_or_null("/root/GDSync")
+		if gd:
+			shooter_id = gd.get_client_id()
 	if droplet.has_method("setup"):
-		droplet.setup(shot_dir, p_speed, p_damage, multiplayer.get_unique_id())
+		droplet.setup(shot_dir, p_speed, p_damage, shooter_id)
 	else:
 		droplet.set("velocity", shot_dir * p_speed)
 	if is_bazooka:
@@ -652,6 +701,9 @@ func _request_animation(state: StringName, restart: bool = false) -> void:
 		return
 	_last_requested_animation = state
 	_body.play_animation_state(state, restart)
+	if gdsync_online:
+		GDSync.call_func(gdsync_play_animation, state)
+		return
 	if multiplayer.is_server():
 		request_animation_state(state)
 	else:
@@ -707,6 +759,8 @@ func sync_animation_state(state: StringName, sequence: int) -> void:
 	_body.play_animation_state(state, true)
 	update_body_squash()
 func _push_collided_items() -> void:
+	if not multiplayer.has_multiplayer_peer():
+		return
 	for i in get_slide_collision_count():
 		var c = get_slide_collision(i)
 		if c.get_collider() is RigidBody3D:
@@ -730,6 +784,8 @@ func _push_away_from(other: Node3D) -> void:
 		distance = 0.001
 	global_position += (delta / distance) * (PLAYER_SEPARATION_DISTANCE - distance)
 func _process(_delta):
+	if gdsync_online and gdsync_client_id != GDSync.get_client_id():
+		return
 	if str(name) == "Player":
 		pass
 	elif multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
@@ -913,9 +969,9 @@ func tint_body(color: Color) -> void:
 @rpc("any_peer", "call_local", "reliable")
 func sync_inventory_to_owner(inventory_data: Dictionary):
 	var sender_id = multiplayer.get_remote_sender_id()
-	if sender_id != 1 and not (sender_id == 0 and multiplayer.is_server()):
+	if not gdsync_online and sender_id != 1 and not (sender_id == 0 and multiplayer.is_server()):
 		return
-	if not is_multiplayer_authority():
+	if not gdsync_online and not is_multiplayer_authority():
 		return
 	if not player_inventory:
 		player_inventory = PlayerInventory.new()
@@ -984,7 +1040,7 @@ func request_add_item(item_id: String, quantity: int = 1):
 	if added > 0:
 		_sync_inventory_to_owner()
 func request_add_single_item(item_id: String) -> bool:
-	if not multiplayer.is_server():
+	if not gdsync_online and not multiplayer.is_server():
 		return false
 	if player_inventory == null:
 		return false
@@ -1042,7 +1098,17 @@ func add_world_item(scene_path: String, player_position: Vector3) -> void:
 func get_inventory() -> PlayerInventory:
 	return player_inventory
 func _sync_inventory_to_owner() -> void:
-	if not multiplayer.is_server() or not player_inventory:
+	if not gdsync_online and not multiplayer.is_server():
+		return
+	if gdsync_online:
+		if not player_inventory:
+			return
+		sync_inventory_to_owner(player_inventory.to_dict())
+		var level_scene = get_tree().get_current_scene()
+		if level_scene and level_scene.has_method("update_local_inventory_display"):
+			level_scene.update_local_inventory_display()
+		return
+	if not player_inventory:
 		return
 	var owner_id = get_multiplayer_authority()
 	if owner_id == 1:
@@ -1239,6 +1305,8 @@ func apply_synced_nickname_height(height: float) -> void:
 	else:
 		_set_nickname_height(BASE_NICKNAME_HEIGHT)
 func _is_local_first_person() -> bool:
+	if gdsync_online:
+		return gdsync_client_id == GDSync.get_client_id() and _spring_arm_offset != null and _spring_arm_offset.is_first_person
 	return is_multiplayer_authority() and _spring_arm_offset != null and _spring_arm_offset.is_first_person
 func get_current_nickname_height() -> float:
 	return nickname.position.y if nickname else BASE_NICKNAME_HEIGHT
@@ -1295,13 +1363,13 @@ func _add_starting_items():
 			break
 	_sync_equipment_appearance()
 func pickup() -> void:
-	if multiplayer.is_server():
+	if gdsync_online or multiplayer.is_server():
 		request_pickup()
 	else:
 		request_pickup.rpc_id(1)
 @rpc("any_peer", "call_local", "reliable")
 func request_pickup() -> void:
-	if not multiplayer.is_server() or not _is_owner_request():
+	if not gdsync_online and (not multiplayer.is_server() or not _is_owner_request()):
 		return
 	var now := Time.get_ticks_msec()
 	if now - _last_server_pickup_request_msec < PICKUP_REQUEST_COOLDOWN_MSEC:

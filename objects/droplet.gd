@@ -15,7 +15,7 @@ var exploded: bool = false
 
 @export var is_bazooka := false
 @export var splash_damage := 35.0
-@export var splash_radius := 8.0
+@export var splash_radius := 5.0
 @export var knockback_force := 25.0
 
 const MAX_BOUNCES: int = 2
@@ -92,6 +92,17 @@ func _on_body_entered(body):
 		return
 	else:
 		if body.is_in_group("player") or body.name == "Player":
+			if body.get("gdsync_online") == true:
+				var victim_id := int(body.get("gdsync_client_id"))
+				var gd := get_node_or_null("/root/GDSync")
+				if gd == null or victim_id < 0 or victim_id == shooter_id:
+					spawn_impact()
+					queue_free()
+					return
+				gd.call_func_on(victim_id, Callable(body, "gdsync_take_hit"), damage, shooter_id)
+				spawn_impact()
+				queue_free()
+				return
 			if shooter_id != 0 and body.get_multiplayer_authority() == shooter_id:
 				return
 			if body.has_method("take_pvp_hit"):
@@ -112,11 +123,16 @@ func _explode_bazooka(impact_pos: Vector3, hit_body: Node = null) -> void:
 
 	if hit_body is Node3D:
 		if hit_body.is_in_group("player") or hit_body.name == "Player":
-			if not (multiplayer.has_multiplayer_peer() and hit_body.get_multiplayer_authority() == my_id):
+			var body_3d := hit_body as Node3D
+			var dir := (body_3d.global_position - impact_pos).normalized()
+			if hit_body.get("gdsync_online") == true:
+				var victim_id := int(hit_body.get("gdsync_client_id"))
+				var gd := get_node_or_null("/root/GDSync")
+				if gd and victim_id >= 0 and victim_id != my_id:
+					gd.call_func_on(victim_id, Callable(hit_body, "gdsync_take_hit"), damage, my_id, dir, knockback_force)
+			elif not (multiplayer.has_multiplayer_peer() and hit_body.get_multiplayer_authority() == my_id):
 				if hit_body.has_method("take_pvp_hit"):
-					var body_3d := hit_body as Node3D
-					var dir := (body_3d.global_position - impact_pos).normalized()
-					body_3d.take_pvp_hit.rpc(damage, my_id, dir, knockback_force)
+					hit_body.take_pvp_hit.rpc(damage, my_id, dir, knockback_force)
 		elif hit_body.has_method("damage"):
 			hit_body.damage(damage)
 
@@ -128,6 +144,13 @@ func _explode_bazooka(impact_pos: Vector3, hit_body: Node = null) -> void:
 		var player_3d := player as Node3D
 		var dist := impact_pos.distance_to(player_3d.global_position)
 		if dist > splash_radius:
+			continue
+		if player.get("gdsync_online") == true:
+			var victim_id := int(player.get("gdsync_client_id"))
+			var gd := get_node_or_null("/root/GDSync")
+			if gd and victim_id >= 0 and victim_id != my_id:
+				var dir := (player_3d.global_position - impact_pos).normalized()
+				gd.call_func_on(victim_id, Callable(player, "gdsync_take_hit"), splash_damage, my_id, dir, knockback_force)
 			continue
 		if multiplayer.has_multiplayer_peer() and player.get_multiplayer_authority() == my_id:
 			continue

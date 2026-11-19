@@ -1,0 +1,93 @@
+[gd_scene format=3 uid="uid://8i15g6xmd75i"]
+
+[ext_resource type="PackedScene" uid="uid://cffjduipbb3s5" path="res://scenes/level/player.tscn" id="1_player"]
+[ext_resource type="Environment" uid="uid://jvmpkdwaeaq" path="res://scenes/main-environment.tres" id="2_env"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(30, 1, 30)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(30, 1, 30)
+
+[node name="OnlineLobby" type="Node3D" unique_id=1110840611]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2016556452]
+environment = ExtResource("2_env")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=716729509]
+transform = Transform3D(-0.422618, -0.694272, 0.582563, 0, 0.642788, 0.766044, -0.906308, 0.323744, -0.271654, 0, 6, 5)
+shadow_enabled = true
+shadow_opacity = 0.75
+
+[node name="Floor" type="StaticBody3D" parent="." unique_id=621090985]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor" unique_id=600565291]
+shape = SubResource("BoxShape3D_floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor" unique_id=2043453254]
+transform = Transform3D(0.99998915, 0.0003741063, -0.0046440223, -0.00036210546, 0.9999966, 0.0025867138, 0.004644973, -0.0025850052, 0.9999859, 0, 0, 0)
+mesh = SubResource("BoxMesh_floor")
+
+[node name="Character1" parent="." unique_id=1678270747 instance=ExtResource("1_player")]
+process_mode = 4
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -1.4, 0, 0)
+
+[node name="Character2" parent="." unique_id=579947259 instance=ExtResource("1_player")]
+process_mode = 4
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 1.4, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=336977195]
+transform = Transform3D(-0.99886197, 0.027719233, -0.038812645, 0.026486723, 0.99913955, 0.031917408, 0.03966397, 0.030853068, -0.9987366, 0, 0.9034364, -4.500579)
+current = true
+fov = 50.0
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1181958023]
+
+[node name="Root" type="Control" parent="UI" unique_id=1584697429]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="UI/Root" unique_id=385508353]
+layout_mode = 0
+offset_left = 540.0
+offset_top = 20.0
+offset_right = 740.0
+offset_bottom = 70.0
+theme_override_font_sizes/font_size = 40
+text = "QUICK PLAY"
+horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="UI/Root" unique_id=302928412]
+layout_mode = 0
+offset_left = 440.0
+offset_top = 66.0
+offset_right = 840.0
+offset_bottom = 100.0
+theme_override_font_sizes/font_size = 17
+text = "waiting for another player..."
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="UI/Root" unique_id=937507057]
+layout_mode = 0
+offset_left = 540.0
+offset_top = 620.0
+offset_right = 740.0
+offset_bottom = 668.0
+theme_override_font_sizes/font_size = 24
+disabled = true
+text = "START MATCH"
+
+[node name="LeaveButton" type="Button" parent="UI/Root" unique_id=1950212007]
+layout_mode = 0
+offset_left = 540.0
+offset_top = 658.0
+offset_right = 740.0
+offset_bottom = 695.0
+theme_override_font_sizes/font_size = 16
+text = "LEAVE LOBBY"

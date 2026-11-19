@@ -106,9 +106,9 @@ theme_override_font_sizes/font_size = 22
 [node name="Option6" type="HBoxContainer" parent="." unique_id=1327970814]
 layout_mode = 0
 offset_left = 570.0
-offset_top = 580.0
+offset_top = 669.0
 offset_right = 718.0
-offset_bottom = 626.0
+offset_bottom = 715.0
 size_flags_horizontal = 4
 size_flags_vertical = 4
 alignment = 1
@@ -294,12 +294,30 @@ placeholder_text = "YourNick"
 max_length = 20
 expand_to_text_length = true
 
+[node name="QuickPlay" type="Button" parent="." unique_id=1585939924]
+layout_mode = 0
+offset_left = 531.0
+offset_top = 572.0
+offset_right = 781.0
+offset_bottom = 618.0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0.42, 0.62, 0.82, 1)
+theme_override_colors/font_hover_color = Color(0.55, 0.75, 0.95, 1)
+theme_override_font_sizes/font_size = 35
+theme_override_styles/normal = SubResource("StyleBoxEmpty_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_button_focus")
+text = "QUICK PLAY"
+flat = true
+
 [node name="BackToGameModes" type="Button" parent="." unique_id=1809412123]
 layout_mode = 0
-offset_left = -13.0
-offset_top = 7.0
-offset_right = 361.0
-offset_bottom = 53.0
+offset_left = -17.0
+offset_top = 75.0
+offset_right = 357.0
+offset_bottom = 121.0
 offset_transform_enabled = true
 offset_transform_scale = Vector2(1.305, 1.305)
 mouse_default_cursor_shape = 2
@@ -321,4 +339,5 @@ flat = true
 [connection signal="pressed" from="Join" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="Host" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="ServerButtons/Refresh" to="." method="_on_refresh_pressed"]
+[connection signal="pressed" from="QuickPlay" to="." method="_on_quick_play_pressed"]
 [connection signal="pressed" from="BackToGameModes" to="." method="_on_back_pressed"]
